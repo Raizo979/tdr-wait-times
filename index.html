@@ -1032,6 +1032,50 @@
       .fov-name {
         font-size: 12px;
       }
+
+      .week-table-wrap {
+        overflow-x: visible;
+      }
+
+      .week-table {
+        width: 100%;
+        min-width: 0;
+        table-layout: fixed;
+        font-size: 9px;
+      }
+
+      .week-table th,
+      .week-table td {
+        padding: 1.5px 1px;
+        white-space: normal;
+        word-break: keep-all;
+      }
+
+      .week-table thead th {
+        font-size: 8.5px;
+        line-height: 1.15;
+      }
+
+      .week-table thead th:first-child,
+      .week-table tbody th {
+        width: 28px;
+        font-size: 8px;
+      }
+
+      /* 拡大モーダルは端末を回転させなくても横長に見えるよう、画面の高さ分の幅を持つ箱を
+         反時計回りに90度回転させて表示する（実際に回転しているのは見た目だけで、操作は不要）。 */
+      .graph-modal-inner {
+        width: 100vh;
+        height: 100vw;
+        max-width: 100vh;
+        max-height: 100vw;
+        overflow: hidden;
+        transform: rotate(-90deg);
+      }
+
+      .graph-modal-inner .graph-wrap.expanded {
+        max-width: none;
+      }
     }
   </style>
 </head>
@@ -1744,7 +1788,8 @@
 
       headRow.innerHTML = '<th>時間帯</th>' + days.map(d => {
         const key = ymdLocal(d);
-        return `<th class="${key === todayKey ? 'is-today' : ''}">${fmtDateJp(d)}</th>`;
+        const w = '日月火水木金土'[d.getDay()];
+        return `<th class="${key === todayKey ? 'is-today' : ''}">${d.getMonth() + 1}/${d.getDate()}<br>(${w})</th>`;
       }).join('');
 
       body.innerHTML = weekSlots().map(slotMin => {
