@@ -1321,12 +1321,17 @@
       });
     }
 
+    // ランド/シーはアトラクションIDが別々なので、最後に選んだアトラクションもパークごとに記憶する。
     const LAST_SELECTED_KEY = 'wait-last-selected';
-    function loadLastSelectedId() {
-      try { return localStorage.getItem(LAST_SELECTED_KEY) || null; } catch (e) { return null; }
+    function loadLastSelectedId(park) {
+      try { return JSON.parse(localStorage.getItem(LAST_SELECTED_KEY) || '{}')[park] || null; } catch (e) { return null; }
     }
-    function saveLastSelectedId(id) {
-      try { localStorage.setItem(LAST_SELECTED_KEY, id); } catch (e) { }
+    function saveLastSelectedId(park, id) {
+      try {
+        const map = JSON.parse(localStorage.getItem(LAST_SELECTED_KEY) || '{}');
+        map[park] = id;
+        localStorage.setItem(LAST_SELECTED_KEY, JSON.stringify(map));
+      } catch (e) { }
     }
 
     // themeparks.wiki APIが返す英語名は東京ディズニーリゾートの正式表記ではないため、
@@ -2025,7 +2030,7 @@
 
     function selectAttraction(id) {
       selectedId = id;
-      saveLastSelectedId(id);
+      saveLastSelectedId(currentPark, id);
       renderSelect();
       renderHero();
       renderGraph();
@@ -2117,7 +2122,7 @@
       OVERALL.lastmonth = mRows.length ? averageWaitOfRows(mRows) : null;
 
       if (!selectedId || !getAttraction(selectedId)) {
-        const lastId = loadLastSelectedId();
+        const lastId = loadLastSelectedId(park);
         if (lastId && getAttraction(lastId)) {
           selectedId = lastId;
         } else {
