@@ -2247,11 +2247,26 @@
       return (best && bestDist <= maxDist) ? best : null;
     }
 
-    function showAtClientX(clientX) {
+    // スマホ幅で拡大表示中は.graph-modal-innerをCSSで-90度回転させて横長に見せているため、
+    // 画面上では時間軸が縦方向（下=早い時間→上=遅い時間）になっている。回転中はタップのY座標から
+    // 時間軸の位置を計算し、それ以外（通常表示）はX座標を使う。
+    function isGraphRotated() {
+      return graphModal.classList.contains('show') && window.matchMedia('(max-width: 480px)').matches;
+    }
+
+    function showAtPoint(clientX, clientY) {
       if (!currentSeries.today) return;
       const rect = svg.getBoundingClientRect();
-      const relX = Math.min(Math.max(clientX - rect.left, 0), rect.width);
-      const vbX = relX / rect.width * 600;
+      let frac;
+      if (isGraphRotated()) {
+        const clampedY = Math.min(Math.max(clientY - rect.top, 0), rect.height);
+        frac = 1 - clampedY / rect.height;
+      } else {
+        const clampedX = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+        frac = clampedX / rect.width;
+      }
+      const relX = frac * rect.width;
+      const vbX = frac * 600;
       const targetMinutes = 540 + (vbX / 600) * (1260 - 540);
 
       guideLine.setAttribute('x1', vbX);
@@ -2287,11 +2302,11 @@
       tooltip.style.top = '8px';
     }
 
-    svg.addEventListener('mousemove', (e) => showAtClientX(e.clientX));
+    svg.addEventListener('mousemove', (e) => showAtPoint(e.clientX, e.clientY));
     svg.addEventListener('mouseleave', hideTooltip);
-    svg.addEventListener('click', (e) => showAtClientX(e.clientX));
+    svg.addEventListener('click', (e) => showAtPoint(e.clientX, e.clientY));
     svg.addEventListener('touchstart', (e) => {
-      if (e.touches && e.touches[0]) showAtClientX(e.touches[0].clientX);
+      if (e.touches && e.touches[0]) showAtPoint(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
 
     loadAll();
