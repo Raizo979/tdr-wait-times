@@ -1,0 +1,2188 @@
+<!--
+作成日: 2026-06-27
+更新日: 2026-06-27
+バージョン: 1.0.0
+-->
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>待ち時間ダッシュボード</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --font: 'Zen Maru Gothic', 'Hiragino Kaku Gothic ProN', sans-serif;
+      --surface: rgba(255, 253, 246, .90);
+      --surface-2: rgba(255, 237, 168, .55);
+      --text-primary: #5c3d1e;
+      --text-secondary: #8a6a3c;
+      --text-muted: #b5996a;
+      --border: #f1d999;
+      --accent: #f2a900;
+      --accent-2: #e0563f;
+      --success: #7a9c4a;
+      --danger: #e0563f;
+      --warning: #f2a900;
+      --radius: 18px;
+      --radius-lg: 24px;
+      --shadow: 0 10px 24px rgba(150, 110, 30, .18);
+    }
+
+    body.theme-sea {
+      --surface: rgba(240, 250, 255, .92);
+      --surface-2: rgba(168, 216, 234, .45);
+      --text-primary: #1f3a5f;
+      --text-secondary: #3b6ea5;
+      --text-muted: #82a9c9;
+      --border: #bfe3f0;
+      --accent: #3fa9dc;
+      --accent-2: #7c5cbf;
+      --success: #3fa796;
+      --danger: #d6536e;
+      --warning: #e0a458;
+      --shadow: 0 10px 24px rgba(40, 70, 110, .22);
+    }
+
+    body {
+      font-family: var(--font);
+      color: var(--text-primary);
+      min-height: 100vh;
+      background-color: #fff8e1;
+      transition: color .3s ease;
+    }
+
+    body.theme-sea {
+      background-color: #0f2540;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%), url('pooh.jpeg');
+      background-position: center 50%;
+      background-size: cover;
+      background-repeat: no-repeat;
+      z-index: -2;
+    }
+
+    body.theme-sea::before {
+      background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%), url('アナ雪.jpg');
+      background-position: center 45%;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 253, 244, .78) 0%, rgba(255, 249, 228, .85) 45%, rgba(255, 253, 244, .90) 100%);
+      z-index: -1;
+    }
+
+    body.theme-sea::after {
+      background: linear-gradient(180deg, rgba(225, 244, 253, .55) 0%, rgba(200, 232, 248, .65) 45%, rgba(225, 244, 253, .72) 100%);
+    }
+
+    .dashboard {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 14px 60px;
+      position: relative;
+    }
+
+    .note {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin: 0 0 12px;
+    }
+
+    .db-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .db-header h1 {
+      font-size: clamp(17px, 4.4vw, 22px);
+      margin: 0;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .park-tabs {
+      display: flex;
+      gap: 6px;
+    }
+
+    .park-tabs button {
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .park-tabs button.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .park-tabs button.refresh-btn {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      font-size: 15px;
+      background: var(--surface-2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .refresh-btn.spinning {
+      animation: spin .8s linear infinite;
+    }
+
+    .refresh-btn:disabled {
+      opacity: .6;
+      cursor: default;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+
+    .select-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+
+    .select-bar label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .select-bar select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .hero-card {
+      padding: 16px 18px;
+      margin-bottom: 12px;
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .hero-name {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .star-btn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 2px;
+      line-height: 1;
+    }
+
+    .star-btn.active {
+      color: var(--accent);
+    }
+
+    .fav-btn {
+      font-size: 20px;
+    }
+
+    .hero-wait {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin: 8px 0 4px;
+    }
+
+    .hero-wait .val {
+      font-size: clamp(42px, 10vw, 58px);
+      font-weight: 800;
+      color: var(--accent-2);
+      line-height: 1;
+    }
+
+    .hero-wait .unit {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .trend-arrow {
+      font-weight: 800;
+    }
+
+    .trend-arrow.up {
+      color: var(--danger);
+    }
+
+    .trend-arrow.down {
+      color: var(--success);
+    }
+
+    .trend-arrow.flat {
+      color: var(--text-muted);
+    }
+
+    .hero-wait .trend-arrow {
+      font-size: clamp(20px, 5vw, 28px);
+      margin-left: 2px;
+    }
+
+    .trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .trend.up {
+      background: color-mix(in srgb, var(--danger) 15%, transparent);
+      color: var(--danger);
+    }
+
+    .trend.down {
+      background: color-mix(in srgb, var(--success) 16%, transparent);
+      color: var(--success);
+    }
+
+    .trend.flat {
+      background: color-mix(in srgb, var(--text-muted) 18%, transparent);
+      color: var(--text-secondary);
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .hstat {
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      padding: 9px 6px;
+      text-align: center;
+    }
+
+    .hstat .l {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .hstat .v {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .hstat .t {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .graph-card {
+      padding: 16px 16px 10px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .weather-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .weather-now {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .weather-now span:first-child {
+      font-size: 26px;
+    }
+
+    .weather-now .t {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .weather-now .mm {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .pill-btn {
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .radar-btn {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+    }
+
+    .weather-cmp-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .weather-cmp-chip {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      background: var(--surface-2);
+      border-radius: 999px;
+      padding: 4px 10px;
+      display: none;
+    }
+
+    .weather-cmp-chip.show {
+      display: inline-block;
+    }
+
+    .graph-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .graph-header h2 {
+      font-size: 14.5px;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .compare-toggles {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .chip.active {
+      border-color: var(--accent-2);
+      color: var(--text-primary);
+      background: color-mix(in srgb, var(--accent-2) 8%, transparent);
+    }
+
+    .chip.active .dot {
+      background: var(--accent-2);
+    }
+
+    .chip-date {
+      display: none;
+      font-size: 10px;
+      opacity: .85;
+      white-space: nowrap;
+    }
+
+    .chip.active .chip-date {
+      display: inline;
+    }
+
+    .expand-btn {
+      flex: 0 0 auto;
+      padding: 5px 11px;
+    }
+
+    .graph-wrap {
+      position: relative;
+    }
+
+    .graph-wrap.expanded {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .graph-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      cursor: crosshair;
+    }
+
+    .graph-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(40, 25, 10, .55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 16px;
+    }
+
+    .graph-modal.show {
+      display: flex;
+    }
+
+    .graph-modal-inner {
+      position: relative;
+      width: 100%;
+      max-width: 1040px;
+      max-height: 90vh;
+      overflow: auto;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 40px 20px 20px;
+    }
+
+    .graph-modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 6px 14px;
+    }
+
+    .grid-line {
+      stroke: var(--border);
+      stroke-width: 1;
+    }
+
+    .axis-label {
+      fill: var(--text-muted);
+      font-size: 10px;
+      font-family: var(--font);
+    }
+
+    .line-today {
+      fill: none;
+      stroke: var(--accent-2);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .cmp-line {
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: none;
+    }
+
+    .cmp-line.show {
+      display: block;
+    }
+
+    #line-yesterday {
+      stroke: #8a9c4a;
+    }
+
+    #line-lastweek {
+      stroke: #5c8fa8;
+    }
+
+    #line-lastmonth {
+      stroke: #b07cc6;
+    }
+
+    .guide-line {
+      stroke: var(--text-muted);
+      stroke-width: 1;
+      stroke-dasharray: 3 3;
+      display: none;
+    }
+
+    .hover-dot {
+      display: none;
+    }
+
+    .tooltip {
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 11.5px;
+      line-height: 1.5;
+      color: var(--text-primary);
+      box-shadow: var(--shadow);
+      white-space: nowrap;
+      z-index: 5;
+    }
+
+    .tooltip .tt-time {
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    .tooltip .tt-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .tooltip .tt-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .overall-card {
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+
+    .overall-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .overall-head h2 {
+      font-size: 14.5px;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .overall-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .ostat {
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      padding: 9px 6px;
+      text-align: center;
+    }
+
+    .ostat .l {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .ostat .v {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .ostat .d {
+      font-size: 10.5px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .ostat .d.up {
+      color: var(--danger);
+    }
+
+    .ostat .d.down {
+      color: var(--success);
+    }
+
+    .fav-overview-card {
+      padding: 14px 14px 6px;
+      margin-bottom: 12px;
+    }
+
+    .fav-overview-card h2 {
+      font-size: 14.5px;
+      margin: 0 0 6px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .fov-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 4px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .fov-row.dragging {
+      opacity: .45;
+      background: var(--surface-2);
+      border-radius: 10px;
+    }
+
+    .fov-handle {
+      flex: 0 0 auto;
+      width: 16px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-muted);
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .fov-row:last-child {
+      border-bottom: none;
+    }
+
+    .fov-row.selected {
+      background: var(--surface-2);
+      border-radius: 10px;
+    }
+
+    .fov-row .aico {
+      font-size: 15px;
+      color: var(--accent-2);
+      flex: 0 0 auto;
+    }
+
+    .fov-name {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 12.5px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .fov-spark {
+      flex: 0 0 auto;
+      width: 56px;
+      height: 33px;
+    }
+
+    .fov-spark svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .fov-spark-empty {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .week-card {
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+
+    .week-card h2 {
+      font-size: 14.5px;
+      margin: 0 0 8px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .week-table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+    }
+
+    .week-table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 460px;
+      font-size: 11.5px;
+    }
+
+    .week-table th,
+    .week-table td {
+      padding: 1.5px 6px;
+      line-height: 1.3;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .week-table thead th {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      background: var(--surface-2);
+      position: sticky;
+      top: 0;
+    }
+
+    .week-table thead th.is-today {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .week-table tbody th {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background: var(--surface);
+    }
+
+    .week-table tbody tr:nth-child(even) th {
+      background: var(--surface-2);
+    }
+
+    .week-table td.wc-none {
+      color: var(--text-muted);
+    }
+
+    .week-table td.wc-low {
+      background: color-mix(in srgb, var(--success) 24%, transparent);
+    }
+
+    .week-table td.wc-mid {
+      background: color-mix(in srgb, var(--warning) 26%, transparent);
+    }
+
+    .week-table td.wc-high {
+      background: color-mix(in srgb, var(--warning) 50%, transparent);
+    }
+
+    .week-table td.wc-vhigh {
+      background: color-mix(in srgb, var(--danger) 32%, transparent);
+    }
+
+    .week-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: 10.5px;
+      color: var(--text-secondary);
+    }
+
+    .week-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .week-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .week-dot.wc-low {
+      background: var(--success);
+    }
+
+    .week-dot.wc-mid {
+      background: var(--warning);
+      opacity: .6;
+    }
+
+    .week-dot.wc-high {
+      background: var(--warning);
+    }
+
+    .week-dot.wc-vhigh {
+      background: var(--danger);
+    }
+
+    .list-card {
+      padding: 14px 14px 6px;
+    }
+
+    .list-card h2 {
+      font-size: 14.5px;
+      margin: 0 0 8px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .group-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin: 10px 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .arow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 4px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .arow:last-child {
+      border-bottom: none;
+    }
+
+    .arow:active {
+      background: var(--surface-2);
+      border-radius: 10px;
+    }
+
+    .arow.selected {
+      background: var(--surface-2);
+      border-radius: 10px;
+    }
+
+    .arow .aico {
+      font-size: 16px;
+      color: var(--accent-2);
+      flex: 0 0 auto;
+    }
+
+    .arow .aname-wrap {
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .arow .aname {
+      flex: 0 1 auto;
+      min-width: 0;
+      font-size: 13.5px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .arow .await {
+      font-size: 14px;
+      font-weight: 800;
+      flex: 0 0 auto;
+      min-width: 42px;
+      text-align: right;
+    }
+
+    .arow .trend-arrow {
+      font-size: 13px;
+      flex: 0 0 auto;
+    }
+
+    .arow .await.low {
+      color: var(--success);
+    }
+
+    .arow .await.mid {
+      color: var(--warning);
+    }
+
+    .arow .await.high {
+      color: var(--danger);
+    }
+
+    .arow .abadge {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+    }
+
+    .arow .abadge.ok {
+      background: color-mix(in srgb, var(--success) 18%, transparent);
+      color: var(--success);
+    }
+
+    .arow .abadge.down {
+      background: color-mix(in srgb, var(--danger) 15%, transparent);
+      color: var(--danger);
+    }
+
+    .arow .star {
+      flex: 0 0 auto;
+      font-size: 17px;
+    }
+
+    @media (max-width:480px) {
+      .hero-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .overall-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .arow .aname {
+        font-size: 13px;
+      }
+
+      .fov-spark {
+        width: 42px;
+      }
+
+      .fov-name {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard">
+    <p class="note" id="dataNote">読み込み中...</p>
+
+    <div class="db-header">
+      <h1>🐻 ディズニーリゾート待ち時間</h1>
+      <div class="park-tabs">
+        <button class="active" data-park="land">ランド</button>
+        <button data-park="sea">シー</button>
+        <button class="pill-btn refresh-btn" id="refreshBtn" type="button" title="今の表示を更新">🔄</button>
+      </div>
+    </div>
+
+    <div class="card fav-overview-card" id="favOverviewCard">
+      <h2>⭐ お気に入りアトラクション</h2>
+      <div id="favOverviewList"></div>
+    </div>
+
+    <div class="card select-bar">
+      <label>📍 見たいアトラクションを選択</label>
+      <select id="attractionSelect"></select>
+    </div>
+
+    <div class="card hero-card">
+      <div class="hero-top">
+        <div class="hero-name"><span id="heroIcon">🐾</span><span id="heroName">-</span></div>
+        <button class="star-btn fav-btn" id="heroFavBtn" title="お気に入り">☆</button>
+      </div>
+      <div class="hero-wait"><span class="val" id="heroWait">-</span><span class="unit">分</span><span
+          class="trend-arrow" id="heroWaitArrow"></span></div>
+      <div class="trend" id="heroTrend"><span id="heroTrendArrow">→</span> <span id="heroTrendText">-</span></div>
+
+      <div class="hero-stats">
+        <div class="hstat">
+          <div class="l">平均</div>
+          <div class="v" id="statAvg">-</div>
+        </div>
+        <div class="hstat">
+          <div class="l">最長</div>
+          <div class="v" id="statMax">-</div>
+          <div class="t" id="statMaxTime"></div>
+        </div>
+        <div class="hstat">
+          <div class="l">最短（10時以降）</div>
+          <div class="v" id="statMin">-</div>
+          <div class="t" id="statMinTime"></div>
+        </div>
+        <div class="hstat">
+          <div class="l">運営状況</div>
+          <div class="v" id="statStatus">-</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card graph-card">
+      <div class="graph-header">
+        <h2>📈 待ち時間グラフ</h2>
+        <div class="compare-toggles" id="compareToggles">
+          <button class="chip" data-target="yesterday"><span class="dot"></span>昨日<span
+              class="chip-date"></span></button>
+          <button class="chip" data-target="lastweek"><span class="dot"></span>1週間前<span
+              class="chip-date"></span></button>
+          <button class="chip" data-target="lastmonth"><span class="dot"></span>前月同曜日<span
+              class="chip-date"></span></button>
+        </div>
+        <button class="pill-btn expand-btn" id="expandBtn" type="button" title="グラフを拡大表示">⤢ 拡大</button>
+      </div>
+
+      <div id="graphWrapAnchor"></div>
+      <div class="graph-wrap" id="graphWrap">
+        <svg class="graph-svg" id="graphSvg" viewBox="0 0 600 220" preserveAspectRatio="xMidYMid meet">
+          <g id="yAxisGroup"></g>
+
+          <text class="axis-label" x="0" y="198">9:00</text>
+          <text class="axis-label" x="86" y="198">11:00</text>
+          <text class="axis-label" x="186" y="198">13:00</text>
+          <text class="axis-label" x="286" y="198">15:00</text>
+          <text class="axis-label" x="386" y="198">17:00</text>
+          <text class="axis-label" x="486" y="198">19:00</text>
+          <text class="axis-label" x="576" y="198">21:00</text>
+
+          <path class="cmp-line" id="line-lastmonth" />
+          <path class="cmp-line" id="line-lastweek" />
+          <path class="cmp-line" id="line-yesterday" />
+          <path class="line-today" id="line-today" />
+
+          <line class="guide-line" id="guideLine" x1="0" y1="10" x2="0" y2="180" />
+          <circle class="hover-dot" id="dot-today" r="4.5" fill="#e0563f" />
+          <circle class="hover-dot" id="dot-yesterday" r="4" fill="#8a9c4a" />
+          <circle class="hover-dot" id="dot-lastweek" r="4" fill="#5c8fa8" />
+          <circle class="hover-dot" id="dot-lastmonth" r="4" fill="#b07cc6" />
+        </svg>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+    </div>
+
+    <div class="card week-card" id="weekCard">
+      <h2>🗓 過去1週間のトレンド</h2>
+      <div class="week-table-wrap">
+        <table class="week-table">
+          <thead>
+            <tr id="weekHeadRow"></tr>
+          </thead>
+          <tbody id="weekBody"></tbody>
+        </table>
+      </div>
+      <div class="week-legend">
+        <span class="week-legend-item"><span class="week-dot wc-low"></span>空き</span>
+        <span class="week-legend-item"><span class="week-dot wc-mid"></span>普通</span>
+        <span class="week-legend-item"><span class="week-dot wc-high"></span>やや混雑</span>
+        <span class="week-legend-item"><span class="week-dot wc-vhigh"></span>混雑</span>
+      </div>
+    </div>
+
+    <div class="card overall-card">
+      <div class="overall-head">
+        <h2>📊 全体の待ち時間傾向</h2>
+        <div class="trend" id="overallTrend"><span id="overallTrendArrow">→</span> <span id="overallTrendText">-</span>
+        </div>
+      </div>
+      <div class="overall-grid">
+        <div class="ostat">
+          <div class="l">今日 合計平均</div>
+          <div class="v" id="ovToday">-</div>
+        </div>
+        <div class="ostat">
+          <div class="l">前日</div>
+          <div class="v" id="ovYesterday">-</div>
+          <div class="d" id="ovYesterdayD"></div>
+        </div>
+        <div class="ostat">
+          <div class="l">前週</div>
+          <div class="v" id="ovLastweek">-</div>
+          <div class="d" id="ovLastweekD"></div>
+        </div>
+        <div class="ostat">
+          <div class="l">前月</div>
+          <div class="v" id="ovLastmonth">-</div>
+          <div class="d" id="ovLastmonthD"></div>
+        </div>
+      </div>
+
+      <div class="weather-row">
+        <div class="weather-now"><span>🌤</span><span class="t" id="wxNow">-</span><span class="mm"
+            id="wxMinMax">読み込み中...</span></div>
+        <button class="pill-btn radar-btn" id="radarBtn" type="button">🌧 雨雲レーダー</button>
+      </div>
+      <div class="weather-cmp-row" id="weatherCmpRow"></div>
+    </div>
+
+    <div class="card list-card">
+      <h2>📋 ほかのアトラクション</h2>
+      <div id="attractionList"></div>
+    </div>
+  </div>
+
+  <div class="graph-modal" id="graphModal">
+    <div class="graph-modal-inner">
+      <button class="pill-btn graph-modal-close" id="graphModalClose" type="button">✕ 閉じる</button>
+      <div id="graphModalSlot"></div>
+    </div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      GAS_URL: 'https://script.google.com/macros/s/AKfycbwR4x42pbyebEh-d6Yb09swll2gRyhsUSiijfRG-fDBfjjI3TlsOpWkdJGrN4hX0fPS/exec',
+      ENTITY_IDS: { land: '3cc919f1-d16d-43e0-8c3f-1dd269bd1a42', sea: '67b290d5-3478-4f23-b601-2f8fb71ba803' },
+      LAT: 35.6329, LON: 139.8804, // 舞浜
+      RADAR_URL: 'https://www.jma.go.jp/bosai/nowc/#zoom:9/lat:35.667338/lon:139.904022/colordepth:normal/elements:hrpns&slmcs',
+    };
+
+    const LAST_PARK_KEY = 'wait-last-park';
+    function loadLastPark() {
+      try { return localStorage.getItem(LAST_PARK_KEY) || 'land'; } catch (e) { return 'land'; }
+    }
+    function saveLastPark(park) {
+      try { localStorage.setItem(LAST_PARK_KEY, park); } catch (e) { }
+    }
+
+    let currentPark = loadLastPark();
+    let ATTRACTIONS = [];
+    let selectedId = null;
+    const activePeriods = { yesterday: false, lastweek: false, lastmonth: false };
+    const WEATHER = {
+      today: { cur: null, max: null, min: null, label: '-', icon: '🌤' },
+      yesterday: { max: null, min: null, label: '-' },
+      lastweek: { max: null, min: null, label: '-' },
+      lastmonth: { max: null, min: null, label: '-' },
+    };
+    const OVERALL = { today: null, yesterday: null, lastweek: null, lastmonth: null };
+    let todayHistory = [];
+    let pastHistory = { yesterday: [], lastweek: [], lastmonth: [] };
+    let weekHistory = [];
+
+    const SERIES_COLORS = { today: '#e0563f', yesterday: '#8a9c4a', lastweek: '#5c8fa8', lastmonth: '#b07cc6' };
+    const SERIES_LABELS = { today: '今日', yesterday: '昨日', lastweek: '1週間前', lastmonth: '前月同曜日' };
+    let currentSeries = {};
+
+    const FAV_KEY = 'wait-favorites';
+    function loadFavoriteIds() {
+      try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch (e) { return []; }
+    }
+    // ランド/シーどちらの画面でも有効な、全アトラクション共通のお気に入り集合。
+    // ATTRACTIONS には現在表示中のパークの分しか入っていないため、そこから逆算すると
+    // パーク切替時にもう一方のパークのお気に入りが消えてしまう。そのためこの集合で一元管理する。
+    const favoriteIds = new Set(loadFavoriteIds());
+    function saveFavorites() {
+      localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(favoriteIds)));
+    }
+
+    // お気に入りの並び順（ドラッグ操作で変更可能）。IDのみを保存し、表示順そのものを記憶する。
+    const FAV_ORDER_KEY = 'wait-fav-order';
+    function loadFavOrder() {
+      try { return JSON.parse(localStorage.getItem(FAV_ORDER_KEY) || '[]'); } catch (e) { return []; }
+    }
+    function saveFavOrder() {
+      localStorage.setItem(FAV_ORDER_KEY, JSON.stringify(favoriteOrder));
+    }
+    let favoriteOrder = loadFavOrder();
+    // 並び順未登録（新しくお気に入りにした直後など）のアトラクションは、待ち時間が長い順で並び順リストの末尾扱いにする。
+    function sortByFavOrder(list) {
+      return [...list].sort((a, b) => {
+        const ia = favoriteOrder.indexOf(a.id), ib = favoriteOrder.indexOf(b.id);
+        if (ia === -1 && ib === -1) return byWaitDesc(a, b);
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      });
+    }
+
+    const LAST_SELECTED_KEY = 'wait-last-selected';
+    function loadLastSelectedId() {
+      try { return localStorage.getItem(LAST_SELECTED_KEY) || null; } catch (e) { return null; }
+    }
+    function saveLastSelectedId(id) {
+      try { localStorage.setItem(LAST_SELECTED_KEY, id); } catch (e) { }
+    }
+
+    // themeparks.wiki APIが返す英語名は東京ディズニーリゾートの正式表記ではないため、
+    // アトラクションIDをキーに正式な日本語名とアイコンを引く一覧（直訳ではなくパーク内表記に合わせている）
+    const ATTRACTION_INFO = {
+      // 東京ディズニーランド
+      '55458c39-ee47-4b8d-ab07-991d12a0313d': { name: 'ペニーアーケード', icon: '🎮' },
+      '5f0425c4-7d35-4afd-bb28-6c73f1920b1f': { name: 'トゥーンパーク', icon: '🎈' },
+      'f9321bc7-aa96-4a70-b963-681482384d1b': { name: 'スイスファミリー・トリーハウス', icon: '🌳' },
+      '78510449-ec64-47d3-a140-7b473dbaddf2': { name: 'ダンボの空飛ぶ大冒険', icon: '🐘' },
+      'cf1e721e-ba51-4e48-a2bc-b07883091e88': { name: 'オムニバス', icon: '🚌' },
+      '037a13bf-b06e-4902-aa12-02d758d1718d': { name: 'ビーバーブラザーズのカヌー探険', icon: '🛶' },
+      '392ca2e8-afe0-4103-b296-c45bd373d036': { name: 'ミッキーのフィルハーマジック', icon: '🎬' },
+      'f82709b6-51a3-4b65-8d6f-c2472f5053df': { name: 'シンデレラのフェアリーテイル・ホール', icon: '👑' },
+      '05c7400b-866d-4d47-9cb1-8722fe6b22da': { name: 'スティッチ・エンカウンター', icon: '👽' },
+      '02a96ff7-da13-48b5-b1a8-f29d9f6109fc': { name: 'マークトウェイン号', icon: '🚢' },
+      'dfe25d8e-e234-4020-a261-30c6825d0680': { name: 'スプラッシュ・マウンテン', icon: '💦' },
+      '83f11a48-0d22-4429-8e59-43fd611d6795': { name: 'カントリーベア・シアター', icon: '🐻' },
+      'e541ad8f-1457-469a-8f35-457555f475ad': { name: 'ピーターパン空の旅', icon: '🧚' },
+      '4f0b3416-0b0a-419b-ba8c-6ee00b7d7144': { name: 'エンチャンテッド・ティキルーム', icon: '🦜' },
+      'e3577b4a-f1d9-4ec5-aacf-b99977ea88c9': { name: 'ビッグサンダー・マウンテン', icon: '⛏️' },
+      'e76670f0-9f5f-4918-8491-9bf51e73a596': { name: '美女と野獣"魔法のものがたり"', icon: '🌹' },
+      '74f17654-ceb1-4f12-9c19-ce6ed0587f33': { name: 'グーフィーのペイント＆プレイハウス', icon: '🎨' },
+      '4ed6a812-df04-4aa8-acb9-c6b164dbb706': { name: 'モンスターズ・インク "ライド&ゴーシーク!"', icon: '👹' },
+      'ca00a0e8-f069-4d0a-9d5e-10cb63010956': { name: 'ベイマックスのハッピーライド', icon: '🤖' },
+      '6ee0697f-57ba-4c7b-8216-7c55b21288d4': { name: 'ウエスタンリバー鉄道', icon: '🚂' },
+      '077c390c-c214-40c4-83e9-93d8f8621141': { name: 'トムソーヤ島いかだ', icon: '🪵' },
+      '52eb0fc9-5853-49c8-8c72-1e5e83aae1c1': { name: 'カリブの海賊', icon: '🏴‍☠️' },
+      '8fce6b54-e3e4-40bb-a574-93c8327c3fab': { name: 'ホーンテッドマンション', icon: '👻' },
+      '4876ec54-92ed-4b0c-8b1b-292bba89c61c': { name: 'ウエスタンランド・シューティングギャラリー', icon: '🔫' },
+      '0de1b543-46fd-4c3f-81c8-31d0cab9ef63': { name: 'イッツ・ア・スモールワールド', icon: '🌍' },
+      'a853aadd-2337-435a-b0a3-2c03db96e5e1': { name: '白雪姫と七人のこびと', icon: '🍎' },
+      '1fb05b7d-953a-4fa7-b7ed-db2eb62b85bf': { name: 'キャッスルカルーセル', icon: '🎠' },
+      'e0887415-3da2-458c-8b88-0691e6b8ab63': { name: 'ジャングルクルーズ：ワイルドライフ・エクスペディション', icon: '🐊' },
+      '6922377e-0ff4-481f-9da3-35051938732a': { name: 'ピノキオの冒険旅行', icon: '🪄' },
+      'cfaa7d1c-111e-49b9-b21b-134eac4000e8': { name: 'アリスのティーパーティー', icon: '☕' },
+      'a0a63e1c-3fc6-4433-b9b1-f5e798ab1f00': { name: 'チップとデールのツリーハウス', icon: '🐿️' },
+      '52c5e406-67e2-4d37-aee8-987644d87b63': { name: 'ガジェットのゴーコースター', icon: '🎢' },
+      '2d215a6d-77a2-4c44-a2e3-c293c1289876': { name: 'ドナルドのボート', icon: '🦆' },
+      '512fd34c-2f0a-4e0a-bcc1-ef4d15c5f803': { name: 'スター・ツアーズ：ザ・アドベンチャーズ・コンティニュー', icon: '🚀' },
+      '534ca90a-2626-4a45-9b7b-1964ed15678e': { name: 'ミニーの家', icon: '🎀' },
+      '73384e33-a86a-4601-996f-61dbffba6ec2': { name: 'ロジャーラビットのカートゥーンスピン', icon: '🚖' },
+      'a88464b5-2cf5-4ef1-b38f-96e07b233bf2': { name: 'プーさんのハニーハント', icon: '🍯' },
+      // 東京ディズニーシー
+      'f66e072d-8bab-48e5-b8cf-6d1947bd291b': { name: 'インディ・ジョーンズ・アドベンチャー：クリスタルスカルの魔宮', icon: '💀' },
+      '3407ebac-c575-4c31-b794-1d271014d303': { name: 'ソアリン：ファンタスティック・フライト', icon: '🪂' },
+      'abbf5b3e-94e5-420a-8257-34594cd9d590': { name: 'ジャスミンのフライングカーペット', icon: '🧞' },
+      '8dbc5d52-ef41-406d-aaad-eb2e6bb3eaea': { name: 'ディズニーシー・トランジットスチーマーライン（アメリカンウォーターフロント）', icon: '🚤' },
+      'de24aae5-66b9-469f-91f6-ef6c3f3b665c': { name: 'ディズニーシー・トランジットスチーマーライン（ロストリバーデルタ）', icon: '🚤' },
+      'dd942cd2-b364-4262-af12-ca1a5012528b': { name: 'レイジングスピリッツ', icon: '🎢' },
+      '5449e9da-ee4c-47d8-a60a-8a964b94c32d': { name: 'ビッグシティ・ヴィークル', icon: '🚗' },
+      '179e4e82-26ed-4b04-bf21-f03808b61df4': { name: 'ニモ＆フレンズ・シーライダー', icon: '🐠' },
+      '2daf12ac-21fd-4bfd-bbf6-0c98bed03e8f': { name: 'ディズニーシー・エレクトリックレールウェイ（アメリカンウォーターフロント）', icon: '🚋' },
+      '2159960b-4f42-4974-93be-7519816de45d': { name: 'アクアトピア', icon: '🌊' },
+      '63ef07eb-9bfb-4782-885e-cfd08ced82f0': { name: 'シンドバッド・ストーリーブック・ヴォヤッジ', icon: '⛵' },
+      'c8744918-42c0-427d-8947-c3dbd1abf8d5': { name: 'ディズニーシー・エレクトリックレールウェイ（ポートディスカバリー）', icon: '🚋' },
+      '58815e8e-7c01-4a42-8a00-1bd1c82a0252': { name: 'スカットルのスクーター', icon: '🐦' },
+      '4ca7254c-7abc-4e52-82e0-9c562c096494': { name: 'タワー・オブ・テラー', icon: '😱' },
+      '44df35ec-28cb-4465-9ae1-95a4d6445a82': { name: 'レオナルドチャレンジ', icon: '🧩' },
+      '2ca8f848-b8e2-4ba5-aa6e-e0fb37e85d0b': { name: 'ヴェネツィアン・ゴンドラ', icon: '🛶' },
+      'c6c0d34d-531a-40d9-b711-3497fd53c28b': { name: 'ジャンピン・ジェリーフィッシュ', icon: '🪼' },
+      '10b5b89e-02a6-4456-9ddd-69e06c2bded4': { name: 'ラプンツェルのランターンフェスティバル', icon: '🏮' },
+      '76aed95a-dce8-4d03-8c2a-8ad69b3d0d4a': { name: 'キャラバンカルーセル', icon: '🐫' },
+      'dcad67fe-76bb-4df2-bf5b-aaf70e8efc12': { name: 'マジックランプシアター', icon: '🧞' },
+      'c15da0f5-9668-48ee-b93a-8b737b6acf5b': { name: '海底2万マイル', icon: '🐙' },
+      '9fb0c97c-ebf7-4c25-8ea7-a3f4fe2aa9ec': { name: 'アナとエルサのフローズンジャーニー', icon: '❄️' },
+      'f37d7fe8-169f-459d-86f3-4843655358bd': { name: 'ブローフィッシュ・バルーンレース', icon: '🐡' },
+      '2d56558a-d4d2-4f79-898c-178c2c20cf67': { name: 'フランダーのフライングフィッシュコースター', icon: '🐟' },
+      '70c16669-c9ba-4f83-bd25-3cd9ea5a0b0c': { name: 'マーメイドラグーン・シアター', icon: '🧜‍♀️' },
+      '6e44f5c0-f996-45ad-aa7e-9738df6a6047': { name: 'フォートレス・エクスプロレーション', icon: '🏰' },
+      'a674e149-8ae3-4338-b1e3-c9f6b804f475': { name: 'アリエルのプレイグラウンド', icon: '🐚' },
+      '7afc3143-befb-4a61-9c86-8d6869eb2ce3': { name: 'ディズニーシー・トランジットスチーマーライン（メディテレーニアンハーバー）', icon: '🚤' },
+      '71943126-e4ac-49c5-ac61-ac1687ad33af': { name: 'タートル・トーク', icon: '🐢' },
+      '7594d3f2-b3d1-47a0-b64f-8bc01d373830': { name: 'ワールプール', icon: '🌀' },
+      'c0224e78-abf6-4f89-b0d4-38647a98dd4d': { name: 'フェアリーティンカーベルのビジーバギー', icon: '✨' },
+      'abb5d6ec-469e-4ab0-8685-5f04e9749653': { name: 'トイ・ストーリー・マニア！', icon: '🎯' },
+      'e8c15bc6-aaab-44ef-8285-1d92ebd2c47d': { name: 'ピーターパンのネバーランドアドベンチャー', icon: '🧚' },
+      'c8526be3-e82c-4692-ae44-e8f2d1142c8a': { name: '地底走行車：センター・オブ・ジ・アース', icon: '🌋' },
+    };
+    function nameFor(id, fallbackName) {
+      return (ATTRACTION_INFO[id] && ATTRACTION_INFO[id].name) || fallbackName;
+    }
+    function iconFor(id) {
+      return (ATTRACTION_INFO[id] && ATTRACTION_INFO[id].icon) || '🎠';
+    }
+
+    function weatherLabel(code) {
+      if (code == null) return '-';
+      if (code === 0) return '快晴';
+      if ([1, 2, 3].includes(code)) return 'くもり';
+      if ([45, 48].includes(code)) return '霧';
+      if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '雨';
+      if ([71, 73, 75, 77, 85, 86].includes(code)) return '雪';
+      if ([95, 96, 99].includes(code)) return '雷雨';
+      return '-';
+    }
+    function weatherIcon(code) {
+      if (code == null) return '🌤';
+      if (code === 0) return '☀️';
+      if ([1, 2, 3].includes(code)) return '☁️';
+      if ([45, 48].includes(code)) return '🌫';
+      if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧';
+      if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
+      if ([95, 96, 99].includes(code)) return '⛈';
+      return '🌤';
+    }
+
+    function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+    function startOfDay(d) { const r = new Date(d); r.setHours(0, 0, 0, 0); return r; }
+    function endOfDay(d) { const r = new Date(d); r.setHours(23, 59, 59, 999); return r; }
+    function minutesOfDay(d) { return d.getHours() * 60 + d.getMinutes(); }
+    function minutesToX(min) { return Math.min(Math.max((min - 540) / (1260 - 540), 0), 1) * 600; }
+    let graphMax = 90;
+    function valueToY(v, max) {
+      max = max || graphMax;
+      return 10 + (max - Math.min(Math.max(v, 0), max)) / max * 170;
+    }
+    function niceGraphMax(rawMax) {
+      const candidates = [30, 60, 90, 120, 150, 180, 210, 240, 270, 300];
+      for (const c of candidates) if (rawMax <= c) return c;
+      return Math.ceil(rawMax / 30) * 30;
+    }
+    // 点と点を直線でつなぐとカクカクして見えるが、単純なCatmull-Romスプラインだと階段状のデータで
+    // 下降の直前に実データにない山（オーバーシュート）が出てしまう。そこで各区間の傾きを越えない
+    // 単調3次エルミート補間（monotone cubic）を使い、滑らかにしつつ実データにない上下動を作らない。
+    function smoothPathD(points) {
+      const n = points.length;
+      if (n < 2) return '';
+      if (n === 2) return `M${points[0].x.toFixed(1)},${points[0].y.toFixed(1)} L${points[1].x.toFixed(1)},${points[1].y.toFixed(1)}`;
+
+      const dx = [], slope = [];
+      for (let i = 0; i < n - 1; i++) {
+        const seg = points[i + 1].x - points[i].x;
+        dx.push(seg);
+        slope.push(seg === 0 ? 0 : (points[i + 1].y - points[i].y) / seg);
+      }
+
+      const m = new Array(n);
+      m[0] = slope[0];
+      m[n - 1] = slope[n - 2];
+      for (let i = 1; i < n - 1; i++) {
+        m[i] = (slope[i - 1] === 0 || slope[i] === 0 || (slope[i - 1] < 0) !== (slope[i] < 0)) ? 0 : (slope[i - 1] + slope[i]) / 2;
+      }
+      for (let i = 0; i < n - 1; i++) {
+        if (slope[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
+        const a = m[i] / slope[i], b = m[i + 1] / slope[i];
+        const h = Math.hypot(a, b);
+        if (h > 3) {
+          const t = 3 / h;
+          m[i] = t * a * slope[i];
+          m[i + 1] = t * b * slope[i];
+        }
+      }
+
+      let d = `M${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`;
+      for (let i = 0; i < n - 1; i++) {
+        const p0 = points[i], p1 = points[i + 1];
+        const c1x = p0.x + dx[i] / 3, c1y = p0.y + m[i] * dx[i] / 3;
+        const c2x = p1.x - dx[i] / 3, c2y = p1.y - m[i + 1] * dx[i] / 3;
+        d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p1.x.toFixed(1)},${p1.y.toFixed(1)}`;
+      }
+      return d;
+    }
+    function renderYAxis(max) {
+      const g = document.getElementById('yAxisGroup');
+      if (!g) return;
+      const steps = [0, max / 3, max * 2 / 3, max];
+      g.innerHTML = steps.map(v => {
+        const y = valueToY(v, max);
+        const labelY = (v === max) ? y + 12 : y - 3;
+        return `<line class="grid-line" x1="0" y1="${y.toFixed(1)}" x2="600" y2="${y.toFixed(1)}" />`
+          + `<text class="axis-label" x="2" y="${labelY.toFixed(1)}">${Math.round(v)}分</text>`;
+      }).join('');
+    }
+    function fmtTime(min) { const h = Math.floor(min / 60), m = min % 60; return h + ':' + String(m).padStart(2, '0'); }
+    function fmtDateJp(d) {
+      const w = '日月火水木金土'[d.getDay()];
+      return (d.getMonth() + 1) + '/' + d.getDate() + '(' + w + ')';
+    }
+    function ymdLocal(d) {
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function nthWeekdayLastMonth(base) {
+      const nth = Math.ceil(base.getDate() / 7);
+      const weekday = base.getDay();
+      const first = new Date(base.getFullYear(), base.getMonth() - 1, 1);
+      const prevY = first.getFullYear(), prevM = first.getMonth();
+      const offset = (weekday - first.getDay() + 7) % 7;
+      let day = 1 + offset + (nth - 1) * 7;
+      let result = new Date(prevY, prevM, day);
+      if (result.getMonth() !== prevM || result.getFullYear() !== prevY) {
+        day -= 7;
+        result = new Date(prevY, prevM, day);
+      }
+      return result;
+    }
+
+    async function fetchLive(park) {
+      const id = CONFIG.ENTITY_IDS[park];
+      const res = await fetch(`https://api.themeparks.wiki/v1/entity/${id}/live`);
+      if (!res.ok) throw new Error('live fetch failed: ' + res.status);
+      const json = await res.json();
+      const items = (json.liveData || []).filter(it => it.entityType === 'ATTRACTION');
+      return items.map(it => ({
+        id: it.id,
+        name: nameFor(it.id, it.name),
+        icon: iconFor(it.id),
+        wait: (it.queue && it.queue.STANDBY && typeof it.queue.STANDBY.waitTime === 'number') ? it.queue.STANDBY.waitTime : null,
+        status: it.status || 'CLOSED',
+      }));
+    }
+
+    async function fetchHistory(park, fromDate, toDate) {
+      if (!CONFIG.GAS_URL || CONFIG.GAS_URL.indexOf('PASTE') !== -1) return [];
+      const params = new URLSearchParams({ api: '1', park, from: fromDate.toISOString(), to: toDate.toISOString() });
+      try {
+        const res = await fetch(CONFIG.GAS_URL + '?' + params.toString());
+        if (!res.ok) return [];
+        const json = await res.json();
+        return json.rows || [];
+      } catch (e) {
+        console.warn('history fetch failed', e);
+        return [];
+      }
+    }
+
+    async function fetchWeather() {
+      const { LAT, LON } = CONFIG;
+      const today = new Date();
+      const dateStrs = {
+        yesterday: ymdLocal(addDays(today, -1)),
+        lastweek: ymdLocal(addDays(today, -7)),
+        lastmonth: ymdLocal(nthWeekdayLastMonth(today)),
+      };
+      const todayStr = ymdLocal(today);
+
+      try {
+        const fUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia%2FTokyo`;
+        const fJson = await fetch(fUrl).then(r => r.json());
+        const idx = (fJson.daily.time || []).indexOf(todayStr);
+        WEATHER.today = {
+          cur: fJson.current ? Math.round(fJson.current.temperature_2m) : null,
+          max: idx > -1 ? Math.round(fJson.daily.temperature_2m_max[idx]) : null,
+          min: idx > -1 ? Math.round(fJson.daily.temperature_2m_min[idx]) : null,
+          label: weatherLabel(fJson.current ? fJson.current.weather_code : (idx > -1 ? fJson.daily.weather_code[idx] : null)),
+          icon: weatherIcon(fJson.current ? fJson.current.weather_code : null),
+        };
+      } catch (e) { console.warn('forecast fetch failed', e); }
+
+      try {
+        const dates = Object.values(dateStrs).slice().sort();
+        const aUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}&start_date=${dates[0]}&end_date=${dates[dates.length - 1]}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia%2FTokyo`;
+        const aJson = await fetch(aUrl).then(r => r.json());
+        ['yesterday', 'lastweek', 'lastmonth'].forEach(key => {
+          const i = (aJson.daily.time || []).indexOf(dateStrs[key]);
+          WEATHER[key] = i > -1
+            ? { max: Math.round(aJson.daily.temperature_2m_max[i]), min: Math.round(aJson.daily.temperature_2m_min[i]), label: weatherLabel(aJson.daily.weather_code[i]) }
+            : { max: null, min: null, label: '-' };
+        });
+      } catch (e) { console.warn('archive fetch failed', e); }
+    }
+
+    function getAttraction(id) { return ATTRACTIONS.find(a => a.id === id); }
+    function byWaitDesc(a, b) { return (b.wait || 0) - (a.wait || 0); }
+    function splitFavRest(list) {
+      return { favs: sortByFavOrder(list.filter(a => a.fav)), rest: list.filter(a => !a.fav).sort(byWaitDesc) };
+    }
+    function wClass(v) { if (v == null) return ''; return v <= 20 ? 'low' : v <= 50 ? 'mid' : 'high'; }
+    function badgeHtml(status) {
+      return status === 'OPERATING'
+        ? '<span class="abadge ok">営業中</span>'
+        : '<span class="abadge down">休止</span>';
+    }
+    function trendInfo(wait, prev) {
+      if (wait == null || prev == null) return { symbol: '-', cls: 'flat', diff: 0 };
+      if (wait > prev) return { symbol: '↗', cls: 'up', diff: wait - prev };
+      if (wait < prev) return { symbol: '↘', cls: 'down', diff: prev - wait };
+      return { symbol: '→', cls: 'flat', diff: 0 };
+    }
+    function trendArrowHtml(wait, prev) {
+      const t = trendInfo(wait, prev);
+      return `<span class="trend-arrow ${t.cls}">${t.symbol}</span>`;
+    }
+
+    function seriesForAttraction(rows, attractionId) {
+      const pts = [];
+      rows.forEach(row => {
+        const entry = (row.data || []).find(d => d.id === attractionId);
+        if (!entry || entry.wait == null) return;
+        const minutes = minutesOfDay(new Date(row.timestamp));
+        pts.push({ minutes, x: minutesToX(minutes), v: entry.wait });
+      });
+      pts.sort((a, b) => a.minutes - b.minutes);
+      return pts;
+    }
+
+    function averageWaitOfRows(rows) {
+      let sum = 0, count = 0;
+      rows.forEach(row => {
+        (row.data || []).forEach(d => { if (d.wait != null) { sum += d.wait; count++; } });
+      });
+      return count > 0 ? Math.round(sum / count) : null;
+    }
+
+    // 直近1回分の取得値だけだと変動が大きくトレンドが分かりづらいため、直近30分の平均値を基準にして上昇/下降を判定する。
+    function trendBaselineFor(attractionId, windowMinutes = 30) {
+      const nowMin = minutesOfDay(new Date());
+      const cutoff = nowMin - windowMinutes;
+      const pts = seriesForAttraction(todayHistory, attractionId).filter(p => p.minutes >= cutoff && p.minutes <= nowMin);
+      if (!pts.length) return null;
+      return Math.round(pts.reduce((s, p) => s + p.v, 0) / pts.length);
+    }
+
+    // 同じ最長/最短値が複数回記録されている場合、現在時刻に最も近い記録時刻を採用する。
+    function closestMinutesAmong(pts, nowMin) {
+      if (!pts.length) return null;
+      return pts.reduce((best, p) => Math.abs(p.minutes - nowMin) < Math.abs(best.minutes - nowMin) ? p : best).minutes;
+    }
+    function todayStatsFor(attractionId) {
+      const pts = seriesForAttraction(todayHistory, attractionId);
+      if (!pts.length) return { avg: null, max: null, maxTime: null, min10: null, min10Time: null };
+      const nowMin = minutesOfDay(new Date());
+      const avg = Math.round(pts.reduce((s, p) => s + p.v, 0) / pts.length);
+      const max = Math.max(...pts.map(p => p.v));
+      const maxTime = closestMinutesAmong(pts.filter(p => p.v === max), nowMin);
+      const after10 = pts.filter(p => p.minutes >= 600);
+      const min10 = after10.length ? Math.min(...after10.map(p => p.v)) : null;
+      const min10Time = min10 == null ? null : closestMinutesAmong(after10.filter(p => p.v === min10), nowMin);
+      return { avg, max, maxTime, min10, min10Time };
+    }
+
+    function renderHero() {
+      const a = getAttraction(selectedId);
+      if (!a) return;
+      document.getElementById('heroIcon').textContent = a.icon;
+      document.getElementById('heroName').textContent = a.name;
+      const favBtn = document.getElementById('heroFavBtn');
+      favBtn.classList.toggle('active', !!a.fav);
+      favBtn.textContent = a.fav ? '★' : '☆';
+      document.getElementById('heroWait').textContent = a.wait == null ? '-' : a.wait;
+
+      const baseline = trendBaselineFor(a.id);
+      const t = trendInfo(a.wait, baseline);
+      const waitArrow = document.getElementById('heroWaitArrow');
+      waitArrow.textContent = a.wait == null ? '' : t.symbol;
+      waitArrow.className = 'trend-arrow ' + t.cls;
+
+      const trendBox = document.getElementById('heroTrend');
+      const trendArrow = document.getElementById('heroTrendArrow');
+      const trendText = document.getElementById('heroTrendText');
+      if (a.wait == null) {
+        trendBox.className = 'trend flat'; trendArrow.textContent = '→'; trendText.textContent = '運営休止中';
+      } else if (baseline == null) {
+        trendBox.className = 'trend flat'; trendArrow.textContent = '→'; trendText.textContent = 'データ収集中（直近30分の平均なし）';
+      } else if (t.cls === 'up') {
+        trendBox.className = 'trend up'; trendArrow.textContent = '↗'; trendText.textContent = '上昇傾向（直近30分平均より+' + t.diff + '分）';
+      } else if (t.cls === 'down') {
+        trendBox.className = 'trend down'; trendArrow.textContent = '↘'; trendText.textContent = '下降傾向（直近30分平均より-' + t.diff + '分）';
+      } else {
+        trendBox.className = 'trend flat'; trendArrow.textContent = '→'; trendText.textContent = '直近30分の平均と変化なし';
+      }
+
+      const stats = todayStatsFor(a.id);
+      document.getElementById('statAvg').textContent = stats.avg == null ? '-' : stats.avg + '分';
+      document.getElementById('statMax').textContent = stats.max == null ? '-' : stats.max + '分';
+      document.getElementById('statMaxTime').textContent = stats.maxTime == null ? '' : fmtTime(stats.maxTime) + '頃';
+      document.getElementById('statMin').textContent = stats.min10 == null ? '-' : stats.min10 + '分';
+      document.getElementById('statMinTime').textContent = stats.min10Time == null ? '' : fmtTime(stats.min10Time) + '頃';
+      document.getElementById('statStatus').innerHTML = badgeHtml(a.status);
+    }
+
+    function renderWeather() {
+      const t = WEATHER.today;
+      document.getElementById('wxNow').textContent = t.cur != null ? t.cur + '℃' : '-';
+      document.getElementById('wxMinMax').textContent = (t.max != null && t.min != null) ? `最高${t.max}℃／最低${t.min}℃・${t.label}` : 'データ取得中...';
+      document.querySelector('.weather-now span:first-child').textContent = t.icon || '🌤';
+
+      // 前日/前週/前月の気象データは気象庁ではなくOpen-Meteoの過去データAPIから毎回直接取得しており、
+      // GASに保存しているわけではない（GASは待ち時間のみ記録）。直近の日付は解析データの反映が数日遅れることがあり、
+      // その間は「データなし」と表示されるが、日数が経てば自動的に値が出るようになる。
+      const row = document.getElementById('weatherCmpRow');
+      row.innerHTML = ['yesterday', 'lastweek', 'lastmonth'].map(key => {
+        const w = WEATHER[key];
+        const text = (w.max != null && w.min != null)
+          ? `${SERIES_LABELS[key]}: 最高${w.max}℃／最低${w.min}℃・${w.label}`
+          : `${SERIES_LABELS[key]}: 気象データなし（数日後に反映される場合があります）`;
+        return `<span class="weather-cmp-chip show" id="wxchip-${key}">${text}</span>`;
+      }).join('');
+    }
+
+    // 今日の記録済み履歴に、まだ記録されていない「今この瞬間」のライブ値を1点だけ足したもの。
+    // 大きいグラフ（5分刻みの正確な時刻軸）とスパークライン（簡易な相対表示）の両方から使う共通ロジック。
+    function todaySeriesWithLive(a) {
+      const pts = seriesForAttraction(todayHistory, a.id).map(p => ({ minutes: p.minutes, v: p.v }));
+      if (a.wait != null) {
+        const nowMin = minutesOfDay(new Date());
+        const last = pts[pts.length - 1];
+        if (!last || nowMin > last.minutes) pts.push({ minutes: nowMin, v: a.wait });
+      }
+      return pts;
+    }
+
+    function buildCurrentSeries() {
+      const a = getAttraction(selectedId);
+      if (!a) { currentSeries = {}; graphMax = 90; renderYAxis(graphMax); return; }
+      const today = todaySeriesWithLive(a).map(p => ({ ...p, x: minutesToX(p.minutes) }));
+      const yesterday = seriesForAttraction(pastHistory.yesterday, a.id);
+      const lastweek = seriesForAttraction(pastHistory.lastweek, a.id);
+      const lastmonth = seriesForAttraction(pastHistory.lastmonth, a.id);
+
+      const allV = [...today, ...yesterday, ...lastweek, ...lastmonth].map(p => p.v);
+      graphMax = niceGraphMax(allV.length ? Math.max(...allV) : 90);
+      renderYAxis(graphMax);
+      [today, yesterday, lastweek, lastmonth].forEach(series => {
+        series.forEach(p => { p.y = valueToY(p.v, graphMax); });
+      });
+
+      currentSeries = { today, yesterday, lastweek, lastmonth };
+    }
+
+    function renderGraph() {
+      buildCurrentSeries();
+      Object.entries(currentSeries).forEach(([key, points]) => {
+        const el = document.getElementById('line-' + key);
+        if (!el) return;
+        el.setAttribute('d', smoothPathD(points));
+        if (key !== 'today') el.classList.toggle('show', activePeriods[key]);
+      });
+    }
+
+    // 選択中のアトラクションについて、過去7日分を「曜日×30分刻みの時間帯」のヒートマップ表で見せる。
+    // GASは5分おきに記録しているため、各30分枠は枠内（±15分）の記録を平均して1つの値にまとめる。
+    const WEEK_SLOT_STEP = 30;
+    const OPEN_HOUR_DISPLAY = 8;
+    const CLOSE_HOUR_DISPLAY = 22;
+    function weekSlots() {
+      const slots = [];
+      for (let m = OPEN_HOUR_DISPLAY * 60; m < CLOSE_HOUR_DISPLAY * 60; m += WEEK_SLOT_STEP) slots.push(m);
+      return slots;
+    }
+    function seriesForAttractionByDay(rows, attractionId) {
+      const byDay = {};
+      rows.forEach(row => {
+        const entry = (row.data || []).find(d => d.id === attractionId);
+        if (!entry || entry.wait == null) return;
+        const dt = new Date(row.timestamp);
+        const dayKey = ymdLocal(dt);
+        (byDay[dayKey] = byDay[dayKey] || []).push({ minutes: minutesOfDay(dt), v: entry.wait });
+      });
+      return byDay;
+    }
+    function weekCellClass(v) {
+      if (v == null) return 'wc-none';
+      if (v <= 20) return 'wc-low';
+      if (v <= 50) return 'wc-mid';
+      if (v <= 90) return 'wc-high';
+      return 'wc-vhigh';
+    }
+    function renderWeekTable() {
+      const a = getAttraction(selectedId);
+      const headRow = document.getElementById('weekHeadRow');
+      const body = document.getElementById('weekBody');
+      if (!a) { headRow.innerHTML = ''; body.innerHTML = ''; return; }
+
+      const today = new Date();
+      const days = [];
+      for (let i = 6; i >= 0; i--) days.push(addDays(today, -i));
+      const todayKey = ymdLocal(today);
+      const byDay = seriesForAttractionByDay(weekHistory, a.id);
+
+      headRow.innerHTML = '<th>時間帯</th>' + days.map(d => {
+        const key = ymdLocal(d);
+        return `<th class="${key === todayKey ? 'is-today' : ''}">${fmtDateJp(d)}</th>`;
+      }).join('');
+
+      body.innerHTML = weekSlots().map(slotMin => {
+        const cells = days.map(d => {
+          const key = ymdLocal(d);
+          const pts = (byDay[key] || []).filter(p => Math.abs(p.minutes - slotMin) <= 15);
+          const v = pts.length ? Math.round(pts.reduce((s, p) => s + p.v, 0) / pts.length) : null;
+          return `<td class="${weekCellClass(v)}">${v == null ? '-' : v}</td>`;
+        }).join('');
+        return `<tr><th>${fmtTime(slotMin)}</th>${cells}</tr>`;
+      }).join('');
+    }
+
+    function renderOverall() {
+      const fmt = v => v == null ? 'データなし' : v + '分';
+      document.getElementById('ovToday').textContent = fmt(OVERALL.today);
+      ['yesterday', 'lastweek', 'lastmonth'].forEach(key => {
+        const label = 'ov' + key[0].toUpperCase() + key.slice(1);
+        const d = document.getElementById(label + 'D');
+        document.getElementById(label).textContent = fmt(OVERALL[key]);
+        if (OVERALL.today == null || OVERALL[key] == null) { d.textContent = ''; d.className = 'd'; return; }
+        const diff = OVERALL.today - OVERALL[key];
+        if (diff === 0) { d.textContent = '±0分'; d.className = 'd'; }
+        else if (diff > 0) { d.textContent = '今日+' + diff + '分'; d.className = 'd up'; }
+        else { d.textContent = '今日' + diff + '分'; d.className = 'd down'; }
+      });
+      const trendBox = document.getElementById('overallTrend');
+      const trendArrow = document.getElementById('overallTrendArrow');
+      const trendText = document.getElementById('overallTrendText');
+      if (OVERALL.today == null || OVERALL.lastweek == null) {
+        trendBox.className = 'trend flat'; trendArrow.textContent = '→'; trendText.textContent = 'データ収集中';
+        return;
+      }
+      const diffWeek = OVERALL.today - OVERALL.lastweek;
+      if (diffWeek > 0) { trendBox.className = 'trend up'; trendArrow.textContent = '↗'; trendText.textContent = '前週より混雑（+' + diffWeek + '分）'; }
+      else if (diffWeek < 0) { trendBox.className = 'trend down'; trendArrow.textContent = '↘'; trendText.textContent = '前週より空いてる（' + diffWeek + '分）'; }
+      else { trendBox.className = 'trend flat'; trendArrow.textContent = '→'; trendText.textContent = '前週並み'; }
+    }
+
+    function renderSelect() {
+      const sel = document.getElementById('attractionSelect');
+      const { favs, rest } = splitFavRest(ATTRACTIONS);
+      function opt(a) { return `<option value="${a.id}" ${a.id === selectedId ? 'selected' : ''}>${a.name}${a.wait == null ? '（休止）' : '（' + a.wait + '分）'}</option>`; }
+      let html = '';
+      if (favs.length) html += `<optgroup label="★ お気に入り">${favs.map(opt).join('')}</optgroup>`;
+      html += `<optgroup label="その他のアトラクション">${rest.map(opt).join('')}</optgroup>`;
+      sel.innerHTML = html;
+    }
+
+    function renderList() {
+      const { favs, rest } = splitFavRest(ATTRACTIONS);
+
+      function rowHtml(a) {
+        const baseline = trendBaselineFor(a.id);
+        return `<div class="arow ${a.id === selectedId ? 'selected' : ''}" data-id="${a.id}">
+      <span class="aico">${a.icon}</span>
+      <div class="aname-wrap">
+        <span class="aname">${a.name}</span>
+        <button class="star-btn star ${a.fav ? 'active' : ''}" data-id="${a.id}" title="お気に入り">${a.fav ? '★' : '☆'}</button>
+      </div>
+      <span class="await ${wClass(a.wait)}">${a.wait == null ? '-' : a.wait + '分'}</span>
+      ${a.wait == null ? '' : trendArrowHtml(a.wait, baseline)}
+      ${badgeHtml(a.status)}
+    </div>`;
+      }
+
+      let html = '';
+      if (favs.length) {
+        html += '<div class="group-label">★ お気に入り</div>' + favs.map(rowHtml).join('');
+      }
+      html += '<div class="group-label">その他のアトラクション</div>' + rest.map(rowHtml).join('');
+      document.getElementById('attractionList').innerHTML = html;
+
+      document.querySelectorAll('.arow').forEach(row => {
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('.star')) return;
+          selectAttraction(row.dataset.id);
+        });
+      });
+      document.querySelectorAll('.star').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFavorite(btn.dataset.id);
+        });
+      });
+    }
+
+    // 各お気に入りの「今日の傾向」を一目で見せるための簡易グラフ。
+    // 大きいグラフ（全アトラクション共通スケール）とは別に、その場の最小〜最大値だけで自前のスケールを作る
+    // ＝ 値が小さいアトラクションでも線がきちんと波打って見える（傾向の分かりやすさを優先）。
+    function sparklinePoints(a, w, h, pad) {
+      const pts = todaySeriesWithLive(a);
+      if (pts.length < 2) return null;
+      const vMin = Math.min(...pts.map(p => p.v));
+      const vMax = Math.max(...pts.map(p => p.v));
+      const range = Math.max(vMax - vMin, 1);
+      const minM = pts[0].minutes, maxM = pts[pts.length - 1].minutes;
+      const spanM = Math.max(maxM - minM, 1);
+      return pts.map(p => ({
+        x: pad + ((p.minutes - minM) / spanM) * (w - pad * 2),
+        y: pad + (1 - (p.v - vMin) / range) * (h - pad * 2),
+      }));
+    }
+
+    function sparklineSvg(a) {
+      const w = 56, h = 33;
+      const points = sparklinePoints(a, w, h, 2);
+      if (!points) return '<span class="fov-spark fov-spark-empty">-</span>';
+      const t = trendInfo(a.wait, trendBaselineFor(a.id));
+      const color = t.cls === 'up' ? 'var(--danger)' : t.cls === 'down' ? 'var(--success)' : 'var(--text-muted)';
+      return `<span class="fov-spark"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`
+        + `<path d="${smoothPathD(points)}" fill="none" style="stroke:${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></span>`;
+    }
+
+    function renderFavOverview() {
+      const card = document.getElementById('favOverviewCard');
+      const favs = sortByFavOrder(ATTRACTIONS.filter(a => a.fav));
+      if (!favs.length) {
+        card.style.display = 'none';
+        return;
+      }
+      card.style.display = '';
+      document.getElementById('favOverviewList').innerHTML = favs.map(a => {
+        const baseline = trendBaselineFor(a.id);
+        return `<div class="fov-row ${a.id === selectedId ? 'selected' : ''}" data-id="${a.id}">
+      <span class="fov-handle" title="ドラッグ／長押しで並び替え">⠿</span>
+      <span class="aico">${a.icon}</span>
+      <span class="fov-name">${a.name}</span>
+      ${sparklineSvg(a)}
+      <span class="await ${wClass(a.wait)}">${a.wait == null ? '-' : a.wait + '分'}</span>
+      ${a.wait == null ? '' : trendArrowHtml(a.wait, baseline)}
+      ${badgeHtml(a.status)}
+    </div>`;
+      }).join('');
+      document.querySelectorAll('.fov-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('.fov-handle')) return;
+          selectAttraction(row.dataset.id);
+        });
+      });
+    }
+
+    // ⠿ハンドルをドラッグ（PC）／長押ししてドラッグ（スマホ）すると、お気に入りの並び順を変更できる。
+    // 並び順はrenderFavOverviewの再描画後も#favOverviewListに対してイベント委任しているので、再設定不要。
+    function setupFavDrag() {
+      const list = document.getElementById('favOverviewList');
+      list.addEventListener('pointerdown', (e) => {
+        const handle = e.target.closest('.fov-handle');
+        if (!handle) return;
+        const row = handle.closest('.fov-row');
+        if (!row) return;
+        e.preventDefault();
+
+        const isTouch = e.pointerType === 'touch';
+        const startY = e.clientY;
+        let active = false;
+        let longPressTimer = isTouch ? setTimeout(begin, 350) : null;
+
+        function begin() {
+          if (active) return;
+          active = true;
+          row.classList.add('dragging');
+        }
+
+        function onMove(ev) {
+          if (!active) {
+            const moved = Math.abs(ev.clientY - startY) > (isTouch ? 8 : 4);
+            if (!moved) return;
+            if (isTouch) { cleanup(); return; }
+            begin();
+          }
+          ev.preventDefault();
+          const rows = Array.from(list.children);
+          let target = null;
+          for (const r of rows) {
+            if (r === row) continue;
+            const rect = r.getBoundingClientRect();
+            if (ev.clientY < rect.top + rect.height / 2) { target = r; break; }
+          }
+          if (target) list.insertBefore(row, target); else list.appendChild(row);
+        }
+
+        function onUp() {
+          if (active) {
+            row.classList.remove('dragging');
+            const newOrder = Array.from(list.children).map(r => r.dataset.id);
+            favoriteOrder = newOrder.concat(favoriteOrder.filter(id => !newOrder.includes(id)));
+            saveFavOrder();
+          }
+          cleanup();
+        }
+
+        function cleanup() {
+          clearTimeout(longPressTimer);
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+        }
+
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
+    }
+
+    function toggleFavorite(id) {
+      const a = getAttraction(id);
+      if (!a) return;
+      a.fav = !a.fav;
+      if (a.fav) {
+        favoriteIds.add(id);
+        if (!favoriteOrder.includes(id)) favoriteOrder.push(id);
+      } else {
+        favoriteIds.delete(id);
+        favoriteOrder = favoriteOrder.filter(x => x !== id);
+      }
+      saveFavorites();
+      saveFavOrder();
+      renderList();
+      renderSelect();
+      renderFavOverview();
+      if (id === selectedId) renderHero();
+    }
+
+    function selectAttraction(id) {
+      selectedId = id;
+      saveLastSelectedId(id);
+      renderSelect();
+      renderHero();
+      renderGraph();
+      renderWeekTable();
+      renderList();
+      renderFavOverview();
+      hideTooltip();
+    }
+
+    function renderPeriodDates() {
+      const today = new Date();
+      const map = { yesterday: addDays(today, -1), lastweek: addDays(today, -7), lastmonth: nthWeekdayLastMonth(today) };
+      Object.keys(map).forEach(key => {
+        const btn = document.querySelector('.chip[data-target="' + key + '"]');
+        const label = fmtDateJp(map[key]);
+        btn.title = label;
+        btn.querySelector('.chip-date').textContent = '(' + label + ')';
+      });
+    }
+
+    async function loadPark(park) {
+      currentPark = park;
+      document.getElementById('attractionList').innerHTML = '<div class="group-label">読み込み中...</div>';
+
+      const today = new Date();
+      const yDate = addDays(today, -1), wDate = addDays(today, -7), mDate = nthWeekdayLastMonth(today);
+
+      const [live, todayRows, yRows, wRows, mRows, weekRows] = await Promise.all([
+        fetchLive(park).catch(e => { console.warn(e); return []; }),
+        fetchHistory(park, startOfDay(today), today),
+        fetchHistory(park, startOfDay(yDate), endOfDay(yDate)),
+        fetchHistory(park, startOfDay(wDate), endOfDay(wDate)),
+        fetchHistory(park, startOfDay(mDate), endOfDay(mDate)),
+        fetchHistory(park, startOfDay(addDays(today, -6)), today),
+      ]);
+
+      ATTRACTIONS = live.map(a => ({ ...a, fav: favoriteIds.has(a.id) }));
+      todayHistory = todayRows;
+      pastHistory = { yesterday: yRows, lastweek: wRows, lastmonth: mRows };
+      weekHistory = weekRows;
+
+      OVERALL.today = todayHistory.length ? averageWaitOfRows(todayHistory) : averageWaitOfRows([{ data: ATTRACTIONS }]);
+      OVERALL.yesterday = yRows.length ? averageWaitOfRows(yRows) : null;
+      OVERALL.lastweek = wRows.length ? averageWaitOfRows(wRows) : null;
+      OVERALL.lastmonth = mRows.length ? averageWaitOfRows(mRows) : null;
+
+      if (!selectedId || !getAttraction(selectedId)) {
+        const lastId = loadLastSelectedId();
+        if (lastId && getAttraction(lastId)) {
+          selectedId = lastId;
+        } else {
+          const topFav = [...ATTRACTIONS].filter(a => a.fav && a.wait != null).sort((x, y) => y.wait - x.wait)[0];
+          const busiest = [...ATTRACTIONS].filter(a => a.wait != null).sort((a, b) => b.wait - a.wait)[0];
+          selectedId = (topFav || busiest || ATTRACTIONS[0] || {}).id || null;
+        }
+      }
+
+      renderSelect();
+      renderHero();
+      renderGraph();
+      renderWeekTable();
+      renderOverall();
+      renderList();
+      renderFavOverview();
+    }
+
+    async function loadAll() {
+      renderPeriodDates();
+      await Promise.all([loadPark(currentPark), fetchWeather()]);
+      renderWeather();
+
+      const note = document.getElementById('dataNote');
+      note.textContent = (CONFIG.GAS_URL.indexOf('PASTE') !== -1)
+        ? '※ 待ち時間・気温は現在値をリアルタイム取得しています。過去データ（前日/前週/前月比較・全体傾向）を使うには gas_Code.gs をGoogle Apps Scriptにデプロイし、CONFIG.GAS_URL を設定してください。'
+        : '※ 待ち時間・気温はリアルタイム取得、過去データはGoogle Apps Scriptで記録した実データを表示しています。';
+    }
+
+    document.getElementById('attractionSelect').addEventListener('change', (e) => selectAttraction(e.target.value));
+    document.getElementById('heroFavBtn').addEventListener('click', () => toggleFavorite(selectedId));
+    setupFavDrag();
+
+    document.getElementById('compareToggles').addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      const key = chip.dataset.target;
+      activePeriods[key] = !activePeriods[key];
+      chip.classList.toggle('active', activePeriods[key]);
+      renderGraph();
+      renderWeather();
+    });
+
+    document.querySelectorAll('.park-tabs button[data-park]').forEach(btn => {
+      if (btn.dataset.park === currentPark) btn.classList.add('active');
+      else btn.classList.remove('active');
+      btn.addEventListener('click', () => {
+        if (btn.dataset.park === currentPark) return;
+        document.querySelectorAll('.park-tabs button[data-park]').forEach(b => b.classList.toggle('active', b === btn));
+        document.body.classList.toggle('theme-sea', btn.dataset.park === 'sea');
+        saveLastPark(btn.dataset.park);
+        selectedId = null;
+        loadPark(btn.dataset.park);
+      });
+    });
+    document.body.classList.toggle('theme-sea', currentPark === 'sea');
+
+    document.getElementById('radarBtn').addEventListener('click', () => {
+      window.open(CONFIG.RADAR_URL, '_blank', 'noopener');
+    });
+
+    const refreshBtn = document.getElementById('refreshBtn');
+    refreshBtn.addEventListener('click', async () => {
+      if (refreshBtn.disabled) return;
+      refreshBtn.disabled = true;
+      refreshBtn.classList.add('spinning');
+      try {
+        await Promise.all([loadPark(currentPark), fetchWeather()]);
+        renderWeather();
+      } finally {
+        refreshBtn.classList.remove('spinning');
+        refreshBtn.disabled = false;
+      }
+    });
+
+    /* ---- グラフ拡大表示（モーダル） ---- */
+    const graphModal = document.getElementById('graphModal');
+    const graphModalSlot = document.getElementById('graphModalSlot');
+    const graphWrapAnchor = document.getElementById('graphWrapAnchor');
+    const svg = document.getElementById('graphSvg');
+    const tooltip = document.getElementById('tooltip');
+    const guideLine = document.getElementById('guideLine');
+    const wrap = document.getElementById('graphWrap');
+
+    function openGraphModal() {
+      graphModalSlot.appendChild(wrap);
+      wrap.classList.add('expanded');
+      graphModal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeGraphModal() {
+      wrap.classList.remove('expanded');
+      graphWrapAnchor.after(wrap);
+      graphModal.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('expandBtn').addEventListener('click', openGraphModal);
+    document.getElementById('graphModalClose').addEventListener('click', closeGraphModal);
+    graphModal.addEventListener('click', (e) => { if (e.target === graphModal) closeGraphModal(); });
+
+    /* ---- グラフ ホバー / クリックでポイント表示 ---- */
+    function hideTooltip() {
+      tooltip.style.display = 'none';
+      guideLine.style.display = 'none';
+      Object.keys(SERIES_COLORS).forEach(k => document.getElementById('dot-' + k).style.display = 'none');
+    }
+
+    function nearestPoint(series, targetMinutes, maxDist) {
+      let best = null, bestDist = Infinity;
+      (series || []).forEach(p => {
+        const dist = Math.abs(p.minutes - targetMinutes);
+        if (dist < bestDist) { bestDist = dist; best = p; }
+      });
+      return (best && bestDist <= maxDist) ? best : null;
+    }
+
+    function showAtClientX(clientX) {
+      if (!currentSeries.today) return;
+      const rect = svg.getBoundingClientRect();
+      const relX = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+      const vbX = relX / rect.width * 600;
+      const targetMinutes = 540 + (vbX / 600) * (1260 - 540);
+
+      guideLine.setAttribute('x1', vbX);
+      guideLine.setAttribute('x2', vbX);
+      guideLine.style.display = 'block';
+
+      let rowsHtml = '<div class="tt-time">' + fmtTime(Math.round(targetMinutes / 5) * 5) + ' 頃</div>';
+      let any = false;
+      Object.keys(SERIES_COLORS).forEach(key => {
+        const isVisible = key === 'today' || activePeriods[key];
+        const p = isVisible ? nearestPoint(currentSeries[key], targetMinutes, 20) : null;
+        const dot = document.getElementById('dot-' + key);
+        if (p) {
+          dot.setAttribute('cx', p.x);
+          dot.setAttribute('cy', p.y);
+          dot.style.display = 'block';
+          rowsHtml += `<div class="tt-row"><span class="tt-dot" style="background:${SERIES_COLORS[key]}"></span>${SERIES_LABELS[key]}: ${p.v}分</div>`;
+          any = true;
+        } else {
+          dot.style.display = 'none';
+        }
+      });
+      if (!any) rowsHtml += '<div class="tt-row">データなし</div>';
+
+      tooltip.innerHTML = rowsHtml;
+      tooltip.style.display = 'block';
+
+      const wrapRect = wrap.getBoundingClientRect();
+      let left = relX + 12;
+      const ttWidth = tooltip.offsetWidth || 100;
+      if (left + ttWidth > wrapRect.width) left = relX - ttWidth - 12;
+      tooltip.style.left = Math.max(4, left) + 'px';
+      tooltip.style.top = '8px';
+    }
+
+    svg.addEventListener('mousemove', (e) => showAtClientX(e.clientX));
+    svg.addEventListener('mouseleave', hideTooltip);
+    svg.addEventListener('click', (e) => showAtClientX(e.clientX));
+    svg.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches[0]) showAtClientX(e.touches[0].clientX);
+    }, { passive: true });
+
+    loadAll();
+  </script>
+</body>
+
+</html>
