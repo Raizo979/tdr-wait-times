@@ -1064,11 +1064,21 @@
 
       /* 拡大モーダルは端末を回転させなくても横長に見えるよう、画面の高さ分の幅を持つ箱を
          反時計回りに90度回転させて表示する（実際に回転しているのは見た目だけで、操作は不要）。 */
+      .graph-modal {
+        padding: 0;
+      }
+
       .graph-modal-inner {
         width: 100vh;
         height: 100vw;
         max-width: 100vh;
         max-height: 100vw;
+        width: 100dvh;
+        height: 100dvw;
+        max-width: 100dvh;
+        max-height: 100dvw;
+        border-radius: 0;
+        padding: 44px 6px 6px;
         overflow: hidden;
         transform: rotate(-90deg);
       }
