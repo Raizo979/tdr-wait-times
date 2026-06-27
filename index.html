@@ -1322,13 +1322,21 @@
     }
 
     // ランド/シーはアトラクションIDが別々なので、最後に選んだアトラクションもパークごとに記憶する。
+    // 旧バージョンでは単純な文字列1個を保存していたため、そのままJSON.parseすると失敗する。
+    // 失敗時は空のマップとして扱い、保存自体は失敗させない。
     const LAST_SELECTED_KEY = 'wait-last-selected';
+    function readLastSelectedMap_() {
+      try {
+        const map = JSON.parse(localStorage.getItem(LAST_SELECTED_KEY) || '{}');
+        return (map && typeof map === 'object') ? map : {};
+      } catch (e) { return {}; }
+    }
     function loadLastSelectedId(park) {
-      try { return JSON.parse(localStorage.getItem(LAST_SELECTED_KEY) || '{}')[park] || null; } catch (e) { return null; }
+      try { return readLastSelectedMap_()[park] || null; } catch (e) { return null; }
     }
     function saveLastSelectedId(park, id) {
       try {
-        const map = JSON.parse(localStorage.getItem(LAST_SELECTED_KEY) || '{}');
+        const map = readLastSelectedMap_();
         map[park] = id;
         localStorage.setItem(LAST_SELECTED_KEY, JSON.stringify(map));
       } catch (e) { }
