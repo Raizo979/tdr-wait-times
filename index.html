@@ -2046,9 +2046,53 @@
       });
     }
 
+    // パーク切替直後、新しいデータが届くまでの間に前のパークの表示が残ると「切り替わっていない」ように
+    // 見えてしまうため、フェッチ開始と同時に主要な表示箇所を一旦読み込み中状態にリセットする。
+    function resetDisplayForLoading() {
+      document.getElementById('attractionSelect').innerHTML = '<option>読み込み中...</option>';
+      document.getElementById('attractionList').innerHTML = '<div class="group-label">読み込み中...</div>';
+
+      document.getElementById('heroIcon').textContent = '⏳';
+      document.getElementById('heroName').textContent = '読み込み中...';
+      document.getElementById('heroFavBtn').classList.remove('active');
+      document.getElementById('heroFavBtn').textContent = '☆';
+      document.getElementById('heroWait').textContent = '-';
+      document.getElementById('heroWaitArrow').textContent = '';
+      document.getElementById('heroTrend').className = 'trend flat';
+      document.getElementById('heroTrendArrow').textContent = '→';
+      document.getElementById('heroTrendText').textContent = '読み込み中...';
+      document.getElementById('statAvg').textContent = '-';
+      document.getElementById('statMax').textContent = '-';
+      document.getElementById('statMaxTime').textContent = '';
+      document.getElementById('statMin').textContent = '-';
+      document.getElementById('statMinTime').textContent = '';
+      document.getElementById('statStatus').textContent = '-';
+
+      ['today', 'yesterday', 'lastweek', 'lastmonth'].forEach(key => {
+        const el = document.getElementById('line-' + key);
+        if (el) el.setAttribute('d', '');
+      });
+      hideTooltip();
+
+      document.getElementById('weekHeadRow').innerHTML = '';
+      document.getElementById('weekBody').innerHTML = '<tr><td class="group-label">読み込み中...</td></tr>';
+
+      document.getElementById('favOverviewCard').style.display = 'none';
+      document.getElementById('favOverviewList').innerHTML = '';
+
+      document.getElementById('ovToday').textContent = '-';
+      ['ovYesterday', 'ovLastweek', 'ovLastmonth'].forEach(id => {
+        document.getElementById(id).textContent = '-';
+        document.getElementById(id + 'D').textContent = '';
+      });
+      document.getElementById('overallTrend').className = 'trend flat';
+      document.getElementById('overallTrendArrow').textContent = '→';
+      document.getElementById('overallTrendText').textContent = '読み込み中...';
+    }
+
     async function loadPark(park) {
       currentPark = park;
-      document.getElementById('attractionList').innerHTML = '<div class="group-label">読み込み中...</div>';
+      resetDisplayForLoading();
 
       const today = new Date();
       const yDate = addDays(today, -1), wDate = addDays(today, -7), mDate = nthWeekdayLastMonth(today);
