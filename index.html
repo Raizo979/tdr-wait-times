@@ -801,6 +801,97 @@
       font-size: 14px;
     }
 
+    .parade-card {
+      padding: 14px 14px 10px;
+      margin-bottom: 12px;
+    }
+
+    .parade-card h2 {
+      font-size: 14.5px;
+      margin: 0 0 4px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .parade-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin: 0 0 8px;
+    }
+
+    .parade-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .parade-row:last-child {
+      border-bottom: none;
+    }
+
+    .parade-name {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .parade-time {
+      flex: 0 0 auto;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 700;
+    }
+
+    .parade-toggle,
+    .parade-delete {
+      font-size: 16px;
+      flex: 0 0 auto;
+    }
+
+    .parade-toggle.active {
+      color: var(--accent-2);
+    }
+
+    .parade-add-row {
+      display: flex;
+      gap: 6px;
+      padding: 10px 4px 2px;
+      flex-wrap: wrap;
+    }
+
+    .parade-add-row input[type="text"] {
+      flex: 1 1 140px;
+      min-width: 0;
+    }
+
+    .parade-add-row input {
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 13px;
+    }
+
+    .parade-band {
+      fill: rgba(149, 92, 219, 0.16);
+    }
+
+    .parade-band-label {
+      font-size: 8px;
+      fill: var(--text-secondary);
+      font-family: var(--font);
+    }
+
     .week-card {
       padding: 14px 16px;
       margin-bottom: 12px;
@@ -1211,6 +1302,7 @@
       <div id="graphWrapAnchor"></div>
       <div class="graph-wrap" id="graphWrap">
         <svg class="graph-svg" id="graphSvg" viewBox="0 0 600 220" preserveAspectRatio="xMidYMid meet">
+          <g id="paradeOverlayGroup"></g>
           <g id="yAxisGroup"></g>
 
           <text class="axis-label" x="0" y="198">9:00</text>
@@ -1233,6 +1325,17 @@
           <circle class="hover-dot" id="dot-lastmonth" r="4" fill="#b07cc6" />
         </svg>
         <div class="tooltip" id="tooltip"></div>
+      </div>
+    </div>
+
+    <div class="card parade-card">
+      <h2>🎶 本日のパレード・ショー</h2>
+      <p class="parade-hint">開始時刻から30分間を、待ち時間グラフに色帯で表示します（表示中のものだけ）。</p>
+      <div id="paradeList"></div>
+      <div class="parade-add-row">
+        <input type="text" id="paradeNameInput" placeholder="名称（例: エレクトリカルパレード）">
+        <input type="time" id="paradeTimeInput">
+        <button class="pill-btn" id="paradeAddBtn" type="button">＋ 追加</button>
       </div>
     </div>
 
@@ -1389,6 +1492,99 @@
         map[park] = id;
         localStorage.setItem(LAST_SELECTED_KEY, JSON.stringify(map));
       } catch (e) { }
+    }
+
+    // 公式サイトはパレード・ショーの開始時刻を取得できる外部APIが見当たらないため、手動で名称と開始時刻を
+    // 登録する方式にしている。パークごとに別の一覧として保存し、有効（enabled）なものだけグラフに表示する。
+    const PARADE_KEY = 'wait-parades';
+    function loadParades() {
+      try {
+        const list = JSON.parse(localStorage.getItem(PARADE_KEY) || '[]');
+        return Array.isArray(list) ? list : [];
+      } catch (e) { return []; }
+    }
+    function saveParades() {
+      try { localStorage.setItem(PARADE_KEY, JSON.stringify(parades)); } catch (e) { }
+    }
+    let parades = loadParades();
+
+    function paradeTimeToMinutes(timeStr) {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(timeStr || '');
+      if (!m) return null;
+      return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    }
+
+    function renderParadeList() {
+      const list = document.getElementById('paradeList');
+      const items = parades.filter(p => p.park === currentPark);
+      if (!items.length) {
+        list.innerHTML = '<div class="group-label">登録されたパレード・ショーはありません</div>';
+        return;
+      }
+      list.innerHTML = items.map(p => `
+        <div class="parade-row" data-id="${p.id}">
+          <button class="star-btn parade-toggle ${p.enabled ? 'active' : ''}" data-id="${p.id}" title="グラフに表示">${p.enabled ? '👁' : '🚫'}</button>
+          <span class="parade-name">${p.name}</span>
+          <span class="parade-time">${p.time}〜</span>
+          <button class="star-btn parade-delete" data-id="${p.id}" title="削除">🗑</button>
+        </div>`).join('');
+      list.querySelectorAll('.parade-toggle').forEach(btn => {
+        btn.addEventListener('click', () => toggleParade(btn.dataset.id));
+      });
+      list.querySelectorAll('.parade-delete').forEach(btn => {
+        btn.addEventListener('click', () => deleteParade(btn.dataset.id));
+      });
+    }
+
+    function toggleParade(id) {
+      const p = parades.find(x => x.id === id);
+      if (!p) return;
+      p.enabled = !p.enabled;
+      saveParades();
+      renderParadeList();
+      renderGraph();
+    }
+
+    function deleteParade(id) {
+      parades = parades.filter(x => x.id !== id);
+      saveParades();
+      renderParadeList();
+      renderGraph();
+    }
+
+    function addParade() {
+      const nameInput = document.getElementById('paradeNameInput');
+      const timeInput = document.getElementById('paradeTimeInput');
+      const name = nameInput.value.trim();
+      const time = timeInput.value;
+      if (!name || paradeTimeToMinutes(time) == null) return;
+      parades.push({
+        id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        park: currentPark,
+        name,
+        time,
+        enabled: true,
+      });
+      saveParades();
+      nameInput.value = '';
+      timeInput.value = '';
+      renderParadeList();
+      renderGraph();
+    }
+
+    function renderParadeOverlay() {
+      const g = document.getElementById('paradeOverlayGroup');
+      if (!g) return;
+      const items = parades.filter(p => p.park === currentPark && p.enabled);
+      g.innerHTML = items.map(p => {
+        const startMin = paradeTimeToMinutes(p.time);
+        if (startMin == null) return '';
+        const x1 = minutesToX(startMin);
+        const x2 = minutesToX(startMin + 30);
+        if (x2 <= x1) return '';
+        return `<rect class="parade-band" x="${x1.toFixed(1)}" y="10" width="${(x2 - x1).toFixed(1)}" height="170" />`
+          + `<text class="parade-band-label" x="${(x1 + 2).toFixed(1)}" y="20">${p.name}</text>`;
+      }).join('');
     }
 
     // themeparks.wiki APIが返す英語名は東京ディズニーリゾートの正式表記ではないため、
@@ -1817,6 +2013,7 @@
         el.setAttribute('d', smoothPathD(points));
         if (key !== 'today') el.classList.toggle('show', activePeriods[key]);
       });
+      renderParadeOverlay();
     }
 
     // 選択中のアトラクションについて、過去7日分を「曜日×30分刻みの時間帯」のヒートマップ表で見せる。
@@ -2154,6 +2351,7 @@
         const el = document.getElementById('line-' + key);
         if (el) el.setAttribute('d', '');
       });
+      document.getElementById('paradeOverlayGroup').innerHTML = '';
       hideTooltip();
 
       document.getElementById('weekHeadRow').innerHTML = '';
@@ -2189,6 +2387,7 @@
     async function loadPark(park) {
       currentPark = park;
       resetDisplayForLoading();
+      renderParadeList();
 
       const today = new Date();
       const yDate = addDays(today, -1), wDate = addDays(today, -7), mDate = nthWeekdayLastMonth(today);
@@ -2270,6 +2469,8 @@
     document.getElementById('radarBtn').addEventListener('click', () => {
       window.open(CONFIG.RADAR_URL, '_blank', 'noopener');
     });
+
+    document.getElementById('paradeAddBtn').addEventListener('click', addParade);
 
     const refreshBtn = document.getElementById('refreshBtn');
     refreshBtn.addEventListener('click', async () => {
