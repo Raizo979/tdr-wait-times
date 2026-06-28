@@ -1,7 +1,7 @@
 <!--
 作成日: 2026-06-27
-更新日: 2026-06-27
-バージョン: 1.0.0
+更新日: 2026-06-28
+バージョン: 1.0.1
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -9,6 +9,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="app-build" content="2026-06-28-1.0.1" />
   <title>待ち時間ダッシュボード</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
@@ -2718,6 +2719,25 @@
     svg.addEventListener('touchstart', (e) => {
       if (e.touches && e.touches[0]) showAtPoint(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
+
+    // ホーム画面に追加したアイコンから開く場合、iOSのスタンドアロン表示にはリロードボタンが無く、
+    // キャッシュが残ったまま古い内容が表示され続けることがある。そこでアプリ表示時・復帰時に
+    // 最新のindex.htmlを直接取得して埋め込みのバージョン番号を比較し、変わっていれば自動で再読込する。
+    (function checkForUpdate() {
+      const CURRENT_BUILD = document.querySelector('meta[name="app-build"]').content;
+      function check() {
+        fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' })
+          .then(res => res.text())
+          .then(html => {
+            const m = html.match(/name="app-build" content="([^"]+)"/);
+            if (m && m[1] !== CURRENT_BUILD) location.reload();
+          })
+          .catch(() => {});
+      }
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+      window.addEventListener('pageshow', check);
+      check();
+    })();
 
     loadAll();
   </script>
