@@ -73,7 +73,7 @@
       content: '';
       position: fixed;
       inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%), url('pooh.jpeg');
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%), url('pooh.jpeg');
       background-position: center 50%;
       background-size: cover;
       background-repeat: no-repeat;
@@ -81,7 +81,7 @@
     }
 
     body.theme-sea::before {
-      background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%), url('アナ雪.jpg');
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%), url('アナ雪.jpg');
       background-position: center 45%;
     }
 
@@ -173,8 +173,13 @@
     }
 
     @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .card {
@@ -784,9 +789,17 @@
       white-space: nowrap;
     }
 
-    .fov-row .await.low { color: var(--success); }
-    .fov-row .await.mid { color: var(--warning); }
-    .fov-row .await.high { color: var(--danger); }
+    .fov-row .await.low {
+      color: var(--success);
+    }
+
+    .fov-row .await.mid {
+      color: var(--warning);
+    }
+
+    .fov-row .await.high {
+      color: var(--danger);
+    }
 
     .fov-row .await.fov-closed {
       min-width: 54px;
@@ -1680,22 +1693,22 @@
       // 東京ディズニーランド
       '55458c39-ee47-4b8d-ab07-991d12a0313d': { name: 'ペニーアーケード', icon: '🎮' },
       '5f0425c4-7d35-4afd-bb28-6c73f1920b1f': { name: 'トゥーンパーク', icon: '🎈' },
-      'f9321bc7-aa96-4a70-b963-681482384d1b': { name: 'スイスファミリー・トリーハウス', icon: '🌳' },
-      '78510449-ec64-47d3-a140-7b473dbaddf2': { name: 'ダンボの空飛ぶ大冒険', icon: '🐘' },
+      'f9321bc7-aa96-4a70-b963-681482384d1b': { name: 'スイスファミリー・ツリーハウス', icon: '🌳' },
+      '78510449-ec64-47d3-a140-7b473dbaddf2': { name: '空飛ぶダンボ', icon: '🐘' },
       'cf1e721e-ba51-4e48-a2bc-b07883091e88': { name: 'オムニバス', icon: '🚌' },
       '037a13bf-b06e-4902-aa12-02d758d1718d': { name: 'ビーバーブラザーズのカヌー探険', icon: '🛶' },
       '392ca2e8-afe0-4103-b296-c45bd373d036': { name: 'ミッキーのフィルハーマジック', icon: '🎬' },
       'f82709b6-51a3-4b65-8d6f-c2472f5053df': { name: 'シンデレラのフェアリーテイル・ホール', icon: '👑' },
       '05c7400b-866d-4d47-9cb1-8722fe6b22da': { name: 'スティッチ・エンカウンター', icon: '👽' },
-      '02a96ff7-da13-48b5-b1a8-f29d9f6109fc': { name: 'マークトウェイン号', icon: '🚢' },
+      '02a96ff7-da13-48b5-b1a8-f29d9f6109fc': { name: '蒸気船マークトウェイン号', icon: '🚢' },
       'dfe25d8e-e234-4020-a261-30c6825d0680': { name: 'スプラッシュ・マウンテン', icon: '💦' },
       '83f11a48-0d22-4429-8e59-43fd611d6795': { name: 'カントリーベア・シアター', icon: '🐻' },
       'e541ad8f-1457-469a-8f35-457555f475ad': { name: 'ピーターパン空の旅', icon: '🧚' },
-      '4f0b3416-0b0a-419b-ba8c-6ee00b7d7144': { name: 'エンチャンテッド・ティキルーム', icon: '🦜' },
+      '4f0b3416-0b0a-419b-ba8c-6ee00b7d7144': { name: '魅惑のチキルーム：スティッチ・プレゼンツ"アロハ・エ・コモ・マイ！"', icon: '🦜' },
       'e3577b4a-f1d9-4ec5-aacf-b99977ea88c9': { name: 'ビッグサンダー・マウンテン', icon: '⛏️' },
       'e76670f0-9f5f-4918-8491-9bf51e73a596': { name: '美女と野獣"魔法のものがたり"', icon: '🌹' },
       '74f17654-ceb1-4f12-9c19-ce6ed0587f33': { name: 'グーフィーのペイント＆プレイハウス', icon: '🎨' },
-      '4ed6a812-df04-4aa8-acb9-c6b164dbb706': { name: 'モンスターズ・インク "ライド&ゴーシーク!"', icon: '👹' },
+      '4ed6a812-df04-4aa8-acb9-c6b164dbb706': { name: 'モンスターズ・インク"ライド＆ゴーシーク！"', icon: '👹' },
       'ca00a0e8-f069-4d0a-9d5e-10cb63010956': { name: 'ベイマックスのハッピーライド', icon: '🤖' },
       '6ee0697f-57ba-4c7b-8216-7c55b21288d4': { name: 'ウエスタンリバー鉄道', icon: '🚂' },
       '077c390c-c214-40c4-83e9-93d8f8621141': { name: 'トムソーヤ島いかだ', icon: '🪵' },
@@ -1730,26 +1743,26 @@
       'c8744918-42c0-427d-8947-c3dbd1abf8d5': { name: 'ディズニーシー・エレクトリックレールウェイ（ポートディスカバリー）', icon: '🚋' },
       '58815e8e-7c01-4a42-8a00-1bd1c82a0252': { name: 'スカットルのスクーター', icon: '🐦' },
       '4ca7254c-7abc-4e52-82e0-9c562c096494': { name: 'タワー・オブ・テラー', icon: '😱' },
-      '44df35ec-28cb-4465-9ae1-95a4d6445a82': { name: 'レオナルドチャレンジ', icon: '🧩' },
+      '44df35ec-28cb-4465-9ae1-95a4d6445a82': { name: 'フォートレス・エクスプロレーション"ザ・レオナルドチャレンジ"', icon: '🧩' },
       '2ca8f848-b8e2-4ba5-aa6e-e0fb37e85d0b': { name: 'ヴェネツィアン・ゴンドラ', icon: '🛶' },
       'c6c0d34d-531a-40d9-b711-3497fd53c28b': { name: 'ジャンピン・ジェリーフィッシュ', icon: '🪼' },
-      '10b5b89e-02a6-4456-9ddd-69e06c2bded4': { name: 'ラプンツェルのランターンフェスティバル', icon: '🏮' },
+      '10b5b89e-02a6-4456-9ddd-69e06c2bded4': { name: 'ラプンツェルのランタンフェスティバル', icon: '🏮' },
       '76aed95a-dce8-4d03-8c2a-8ad69b3d0d4a': { name: 'キャラバンカルーセル', icon: '🐫' },
       'dcad67fe-76bb-4df2-bf5b-aaf70e8efc12': { name: 'マジックランプシアター', icon: '🧞' },
       'c15da0f5-9668-48ee-b93a-8b737b6acf5b': { name: '海底2万マイル', icon: '🐙' },
       '9fb0c97c-ebf7-4c25-8ea7-a3f4fe2aa9ec': { name: 'アナとエルサのフローズンジャーニー', icon: '❄️' },
       'f37d7fe8-169f-459d-86f3-4843655358bd': { name: 'ブローフィッシュ・バルーンレース', icon: '🐡' },
       '2d56558a-d4d2-4f79-898c-178c2c20cf67': { name: 'フランダーのフライングフィッシュコースター', icon: '🐟' },
-      '70c16669-c9ba-4f83-bd25-3cd9ea5a0b0c': { name: 'マーメイドラグーン・シアター', icon: '🧜‍♀️' },
+      '70c16669-c9ba-4f83-bd25-3cd9ea5a0b0c': { name: 'マーメイドラグーンシアター', icon: '🧜‍♀️' },
       '6e44f5c0-f996-45ad-aa7e-9738df6a6047': { name: 'フォートレス・エクスプロレーション', icon: '🏰' },
       'a674e149-8ae3-4338-b1e3-c9f6b804f475': { name: 'アリエルのプレイグラウンド', icon: '🐚' },
       '7afc3143-befb-4a61-9c86-8d6869eb2ce3': { name: 'ディズニーシー・トランジットスチーマーライン（メディテレーニアンハーバー）', icon: '🚤' },
       '71943126-e4ac-49c5-ac61-ac1687ad33af': { name: 'タートル・トーク', icon: '🐢' },
       '7594d3f2-b3d1-47a0-b64f-8bc01d373830': { name: 'ワールプール', icon: '🌀' },
-      'c0224e78-abf6-4f89-b0d4-38647a98dd4d': { name: 'フェアリーティンカーベルのビジーバギー', icon: '✨' },
+      'c0224e78-abf6-4f89-b0d4-38647a98dd4d': { name: 'フェアリー・ティンカーベルのビジーバギー', icon: '✨' },
       'abb5d6ec-469e-4ab0-8685-5f04e9749653': { name: 'トイ・ストーリー・マニア！', icon: '🎯' },
       'e8c15bc6-aaab-44ef-8285-1d92ebd2c47d': { name: 'ピーターパンのネバーランドアドベンチャー', icon: '🧚' },
-      'c8526be3-e82c-4692-ae44-e8f2d1142c8a': { name: '地底走行車：センター・オブ・ジ・アース', icon: '🌋' },
+      'c8526be3-e82c-4692-ae44-e8f2d1142c8a': { name: 'センター・オブ・ジ・アース', icon: '🌋' },
     };
     function nameFor(id, fallbackName) {
       return (ATTRACTION_INFO[id] && ATTRACTION_INFO[id].name) || fallbackName;
@@ -2248,13 +2261,12 @@
     // 各お気に入りの「今日の傾向」を一目で見せるための簡易グラフ。
     // 大きいグラフ（全アトラクション共通スケール）とは別に、その場の最小〜最大値だけで自前のスケールを作る
     // ＝ 値が小さいアトラクションでも線がきちんと波打って見える（傾向の分かりやすさを優先）。
-    function sparklinePoints(a, w, h, pad) {
+    function sparklinePoints(a, w, h, pad, minM, maxM) {
       const pts = todaySeriesWithLive(a);
       if (pts.length < 2) return null;
       const vMin = Math.min(...pts.map(p => p.v));
       const vMax = Math.max(...pts.map(p => p.v));
       const range = Math.max(vMax - vMin, 1);
-      const minM = pts[0].minutes, maxM = pts[pts.length - 1].minutes;
       const spanM = Math.max(maxM - minM, 1);
       return pts.map(p => ({
         x: pad + ((p.minutes - minM) / spanM) * (w - pad * 2),
@@ -2262,9 +2274,12 @@
       }));
     }
 
-    function sparklineSvg(a) {
+    // minM/maxMはお気に入り全体で共通の時間範囲（renderFavOverviewで算出）。
+    // 値（Y軸）はアトラクションごとの自前スケールのままだが、時間（X軸）はここで揃えることで
+    // 開始時刻が同じアトラクション同士はグラフの開始位置も揃って見えるようにする。
+    function sparklineSvg(a, minM, maxM) {
       const w = 56, h = 33;
-      const points = sparklinePoints(a, w, h, 2);
+      const points = sparklinePoints(a, w, h, 2, minM, maxM);
       if (!points) return '<span class="fov-spark fov-spark-empty">-</span>';
       const t = trendInfo(a.wait, trendBaselineFor(a.id));
       const color = t.cls === 'up' ? 'var(--danger)' : t.cls === 'down' ? 'var(--success)' : 'var(--text-muted)';
@@ -2291,13 +2306,16 @@
         return;
       }
       card.style.display = '';
+      const allMinutes = favs.flatMap(a => todaySeriesWithLive(a).map(p => p.minutes));
+      const minM = allMinutes.length ? Math.min(...allMinutes) : 0;
+      const maxM = allMinutes.length ? Math.max(...allMinutes) : 1;
       document.getElementById('favOverviewList').innerHTML = favs.map(a => {
         const baseline = trendBaselineFor(a.id);
         return `<div class="fov-row ${a.id === selectedId ? 'selected' : ''}" data-id="${a.id}">
       <span class="fov-handle" title="ドラッグ／長押しで並び替え">⠿</span>
       <span class="aico">${a.icon}</span>
       <span class="fov-name">${a.name}</span>
-      ${sparklineSvg(a)}
+      ${sparklineSvg(a, minM, maxM)}
       ${fovStatusHtml(a, baseline)}
     </div>`;
       }).join('');
@@ -2657,7 +2675,6 @@
         const clampedX = Math.min(Math.max(clientX - rect.left, 0), rect.width);
         frac = clampedX / rect.width;
       }
-      const relX = frac * rect.width;
       const vbX = frac * 600;
       const targetMinutes = 540 + (vbX / 600) * (1260 - 540);
 
@@ -2686,6 +2703,7 @@
       tooltip.innerHTML = rowsHtml;
       tooltip.style.display = 'block';
 
+      const relX = frac * rect.width;
       const wrapRect = wrap.getBoundingClientRect();
       let left = relX + 12;
       const ttWidth = tooltip.offsetWidth || 100;
