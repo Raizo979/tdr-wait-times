@@ -849,6 +849,15 @@
       background: var(--accent);
     }
 
+    /* 今日・前日・前週の同曜日（is-key）以外の列は、9日分表示する分の幅を確保するため小さくする。 */
+    .week-table thead th:not(.is-key):not(:first-child) {
+      font-size: 9px;
+    }
+
+    .week-table tbody td:not(.is-key) {
+      font-size: 9.5px;
+    }
+
     .week-table tbody th {
       font-size: 10px;
       font-weight: 700;
@@ -1089,6 +1098,19 @@
       .week-table tbody th {
         width: 28px;
         font-size: 8px;
+      }
+
+      /* 今日・前日・前週の同曜日（is-key）は今までの幅・文字サイズを保ち、他の6列はその分縮める。 */
+      .week-table thead th.is-key {
+        width: 43px;
+      }
+
+      .week-table thead th:not(.is-key):not(:first-child) {
+        font-size: 7px;
+      }
+
+      .week-table tbody td:not(.is-key) {
+        font-size: 7.5px;
       }
 
       /* 拡大モーダルは端末を回転させなくても横長に見えるよう、画面の高さ分の幅を持つ箱を
@@ -1833,14 +1855,25 @@
 
       const today = new Date();
       const days = [];
-      for (let i = 6; i >= 0; i--) days.push(addDays(today, -i));
+      // 前週の同曜日（今日から7日前）が範囲に入るよう、表示期間を9日間に広げている。
+      for (let i = 8; i >= 0; i--) days.push(addDays(today, -i));
       const todayKey = ymdLocal(today);
+      const yesterdayKey = ymdLocal(addDays(today, -1));
+      const lastWeekKey = ymdLocal(addDays(today, -7));
       const byDay = seriesForAttractionByDay(weekHistory, a.id);
+
+      // 今日・前日・前週の同曜日の3列だけ強調表示（is-key）し、他の6列は小さく表示する。
+      function dayClass(key) {
+        const cls = [];
+        if (key === todayKey) cls.push('is-today');
+        if (key === todayKey || key === yesterdayKey || key === lastWeekKey) cls.push('is-key');
+        return cls.join(' ');
+      }
 
       headRow.innerHTML = '<th>時間帯</th>' + days.map(d => {
         const key = ymdLocal(d);
         const w = '日月火水木金土'[d.getDay()];
-        return `<th class="${key === todayKey ? 'is-today' : ''}">${d.getMonth() + 1}/${d.getDate()}<br>(${w})</th>`;
+        return `<th class="${dayClass(key)}">${d.getMonth() + 1}/${d.getDate()}<br>(${w})</th>`;
       }).join('');
 
       body.innerHTML = weekSlots().map(slotMin => {
@@ -1848,7 +1881,7 @@
           const key = ymdLocal(d);
           const pts = (byDay[key] || []).filter(p => Math.abs(p.minutes - slotMin) <= 15);
           const v = pts.length ? Math.round(pts.reduce((s, p) => s + p.v, 0) / pts.length) : null;
-          return `<td class="${weekCellClass(v)}">${v == null ? '-' : v}</td>`;
+          return `<td class="${weekCellClass(v)} ${dayClass(key)}">${v == null ? '-' : v}</td>`;
         }).join('');
         return `<tr><th>${fmtTime(slotMin)}</th>${cells}</tr>`;
       }).join('');
@@ -2166,7 +2199,7 @@
         fetchHistory(park, startOfDay(yDate), endOfDay(yDate)),
         fetchHistory(park, startOfDay(wDate), endOfDay(wDate)),
         fetchHistory(park, startOfDay(mDate), endOfDay(mDate)),
-        fetchHistory(park, startOfDay(addDays(today, -6)), today),
+        fetchHistory(park, startOfDay(addDays(today, -8)), today),
       ]);
 
       ATTRACTIONS = live.map(a => ({ ...a, fav: favoriteIds.has(a.id) }));
