@@ -898,6 +898,19 @@
       flex-wrap: wrap;
     }
 
+    .parade-share-row {
+      display: flex;
+      gap: 6px;
+      padding: 8px 4px 2px;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+    }
+
+    .parade-share-row .pill-btn {
+      font-size: 11.5px;
+    }
+
     .parade-add-row input[type="text"] {
       flex: 1 1 140px;
       min-width: 0;
@@ -1372,6 +1385,10 @@
           <input type="time" id="paradeTimeInput">
           <button class="pill-btn" id="paradeAddBtn" type="button">＋ 追加</button>
         </div>
+        <div class="parade-share-row">
+          <button class="pill-btn" id="paradeUploadBtn" type="button">⬆ 共有用にアップロード</button>
+          <button class="pill-btn" id="paradeDownloadBtn" type="button">⬇ 共有設定を取得</button>
+        </div>
       </div>
     </div>
 
@@ -1621,6 +1638,40 @@
         return `<rect class="parade-band" x="${x1.toFixed(1)}" y="10" width="${(x2 - x1).toFixed(1)}" height="170" />`
           + `<text class="parade-band-label" x="${(x1 + 2).toFixed(1)}" y="20">${p.name}</text>`;
       }).join('');
+    }
+
+    // パレード設定の「共有」は任意参加: ボタンを押した人だけがGASにアップロード／取得する。
+    // 自動同期はしない（既存のお気に入り等と同じくlocalStorageが基本で、共有は手動操作のみ）。
+    async function uploadParades() {
+      try {
+        const params = new URLSearchParams({ action: 'uploadParades', data: JSON.stringify(parades) });
+        const res = await fetch(CONFIG.GAS_URL + '?' + params.toString());
+        const json = await res.json();
+        alert(json.ok ? `アップロードしました（${json.count}件）。` : 'アップロードに失敗しました。');
+      } catch (e) {
+        alert('アップロードに失敗しました。通信環境を確認してください。');
+      }
+    }
+
+    async function downloadParades() {
+      try {
+        const params = new URLSearchParams({ action: 'getParades' });
+        const res = await fetch(CONFIG.GAS_URL + '?' + params.toString());
+        const json = await res.json();
+        if (!json.parades || !json.parades.length) {
+          alert('共有された設定がまだありません。');
+          return;
+        }
+        const ok = confirm(`共有設定（${json.parades.length}件）を取り込みます。今の設定は置き換えられます。よろしいですか？`);
+        if (!ok) return;
+        parades = json.parades;
+        saveParades();
+        renderParadeList();
+        renderGraph();
+        alert('取り込みました。');
+      } catch (e) {
+        alert('取得に失敗しました。通信環境を確認してください。');
+      }
     }
 
     // themeparks.wiki APIが返す英語名は東京ディズニーリゾートの正式表記ではないため、
@@ -2507,6 +2558,8 @@
     });
 
     document.getElementById('paradeAddBtn').addEventListener('click', addParade);
+    document.getElementById('paradeUploadBtn').addEventListener('click', uploadParades);
+    document.getElementById('paradeDownloadBtn').addEventListener('click', downloadParades);
 
     // パレード・ショーカードはデフォルトで折りたたみ。開閉状態は次回以降も覚えておく。
     const PARADE_COLLAPSED_KEY = 'wait-parade-collapsed';
