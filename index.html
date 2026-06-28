@@ -808,11 +808,42 @@
 
     .parade-card h2 {
       font-size: 14.5px;
-      margin: 0 0 4px;
+      margin: 0;
       font-weight: 700;
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    .parade-toggle-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+      font-family: var(--font);
+      text-align: left;
+      color: inherit;
+    }
+
+    .parade-chevron {
+      font-size: 12px;
+      color: var(--text-muted);
+      flex: 0 0 auto;
+      transition: transform .15s ease;
+    }
+
+    .parade-body {
+      margin-top: 8px;
+    }
+
+    .parade-card.collapsed .parade-body {
+      display: none;
     }
 
     .parade-hint {
@@ -1328,14 +1359,19 @@
       </div>
     </div>
 
-    <div class="card parade-card">
-      <h2>🎶 本日のパレード・ショー</h2>
-      <p class="parade-hint">開始時刻から30分間を、待ち時間グラフに色帯で表示します（表示中のものだけ）。</p>
-      <div id="paradeList"></div>
-      <div class="parade-add-row">
-        <input type="text" id="paradeNameInput" placeholder="名称（例: エレクトリカルパレード）">
-        <input type="time" id="paradeTimeInput">
-        <button class="pill-btn" id="paradeAddBtn" type="button">＋ 追加</button>
+    <div class="card parade-card" id="paradeCard">
+      <button class="parade-toggle-header" id="paradeToggleHeader" type="button">
+        <h2>🎶 本日のパレード・ショー</h2>
+        <span class="parade-chevron" id="paradeChevron">▸</span>
+      </button>
+      <div class="parade-body" id="paradeBody">
+        <p class="parade-hint">開始時刻から30分間を、待ち時間グラフに色帯で表示します（表示中のものだけ）。</p>
+        <div id="paradeList"></div>
+        <div class="parade-add-row">
+          <input type="text" id="paradeNameInput" placeholder="名称（例: エレクトリカルパレード）">
+          <input type="time" id="paradeTimeInput">
+          <button class="pill-btn" id="paradeAddBtn" type="button">＋ 追加</button>
+        </div>
       </div>
     </div>
 
@@ -2471,6 +2507,29 @@
     });
 
     document.getElementById('paradeAddBtn').addEventListener('click', addParade);
+
+    // パレード・ショーカードはデフォルトで折りたたみ。開閉状態は次回以降も覚えておく。
+    const PARADE_COLLAPSED_KEY = 'wait-parade-collapsed';
+    function loadParadeCollapsed() {
+      try {
+        const v = localStorage.getItem(PARADE_COLLAPSED_KEY);
+        return v === null ? true : v === '1';
+      } catch (e) { return true; }
+    }
+    function saveParadeCollapsed(collapsed) {
+      try { localStorage.setItem(PARADE_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch (e) { }
+    }
+    let paradeCollapsed = loadParadeCollapsed();
+    function applyParadeCollapsed() {
+      document.getElementById('paradeCard').classList.toggle('collapsed', paradeCollapsed);
+      document.getElementById('paradeChevron').textContent = paradeCollapsed ? '▸' : '▾';
+    }
+    document.getElementById('paradeToggleHeader').addEventListener('click', () => {
+      paradeCollapsed = !paradeCollapsed;
+      saveParadeCollapsed(paradeCollapsed);
+      applyParadeCollapsed();
+    });
+    applyParadeCollapsed();
 
     const refreshBtn = document.getElementById('refreshBtn');
     refreshBtn.addEventListener('click', async () => {
