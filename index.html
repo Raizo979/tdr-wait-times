@@ -1,7 +1,7 @@
 <!--
 作成日: 2026-06-27
 更新日: 2026-06-28
-バージョン: 1.0.1
+バージョン: 1.1.0
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -9,7 +9,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="app-build" content="2026-06-28-1.0.1" />
+  <meta name="app-build" content="2026-06-28-1.1.0" />
   <title>待ち時間ダッシュボード</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
@@ -1849,6 +1849,26 @@
       }
       return d;
     }
+    // 通常は5分おきに記録されるが、休止中は欠測（wait==null）として記録から除外される。
+    // そのまま全点をつなぐと休止区間が前後の点で直結され、休止していたことが分からなくなるため、
+    // 記録間隔が大きく開いている（=休止していた）箇所で線を分割し、空白として表示する。
+    const SERIES_GAP_MINUTES = 10;
+    function splitByGap(points, gapMinutes = SERIES_GAP_MINUTES) {
+      const segments = [];
+      let current = [];
+      points.forEach(p => {
+        if (current.length && p.minutes - current[current.length - 1].minutes > gapMinutes) {
+          segments.push(current);
+          current = [];
+        }
+        current.push(p);
+      });
+      if (current.length) segments.push(current);
+      return segments;
+    }
+    function multiSegmentPathD(points, gapMinutes = SERIES_GAP_MINUTES) {
+      return splitByGap(points, gapMinutes).map(seg => smoothPathD(seg)).filter(Boolean).join(' ');
+    }
     function renderYAxis(max) {
       const g = document.getElementById('yAxisGroup');
       if (!g) return;
@@ -2111,7 +2131,7 @@
       Object.entries(currentSeries).forEach(([key, points]) => {
         const el = document.getElementById('line-' + key);
         if (!el) return;
-        el.setAttribute('d', smoothPathD(points));
+        el.setAttribute('d', multiSegmentPathD(points));
         if (key !== 'today') el.classList.toggle('show', activePeriods[key]);
       });
       renderParadeOverlay();
@@ -2270,6 +2290,7 @@
       const range = Math.max(vMax - vMin, 1);
       const spanM = Math.max(maxM - minM, 1);
       return pts.map(p => ({
+        minutes: p.minutes,
         x: pad + ((p.minutes - minM) / spanM) * (w - pad * 2),
         y: pad + (1 - (p.v - vMin) / range) * (h - pad * 2),
       }));
@@ -2285,7 +2306,7 @@
       const t = trendInfo(a.wait, trendBaselineFor(a.id));
       const color = t.cls === 'up' ? 'var(--danger)' : t.cls === 'down' ? 'var(--success)' : 'var(--text-muted)';
       return `<span class="fov-spark"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`
-        + `<path d="${smoothPathD(points)}" fill="none" style="stroke:${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></span>`;
+        + `<path d="${multiSegmentPathD(points)}" fill="none" style="stroke:${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></span>`;
     }
 
     // お気に入り一覧は表示を詰めるため「営業中」バッジを出さず、休止中（最初から休止／途中で休止になった
